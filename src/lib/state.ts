@@ -1,7 +1,7 @@
 import type { DashboardState } from '../types/inventory';
 
 // Try API first, fallback to static file
-const API_URL = 'http://localhost:3090/api/state';
+const API_URL = '/api/state';
 const STATIC_URL = '/state.json';
 
 export async function fetchState(): Promise<DashboardState> {

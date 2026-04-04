@@ -31,24 +31,27 @@ def run_cmd(cmd):
 
 def get_system_metrics():
     """Collect system metrics."""
-    # CPU usage
-    cpu_line = run_cmd("top -bn1 | grep 'Cpu(s)' | head -1")
+    # CPU usage - use vmstat for more reliable reading
     cpu_pct = 0
-    if cpu_line:
-        try:
-            idle = float(cpu_line.split(",")[3].split()[0])
-            cpu_pct = round(100 - idle)
-        except:
-            pass
+    try:
+        vmstat = run_cmd("vmstat 1 2 | tail -1")
+        if vmstat:
+            parts = vmstat.split()
+            if len(parts) >= 15:
+                idle = int(parts[14])
+                cpu_pct = 100 - idle
+    except:
+        pass
 
-    # Memory
-    mem_info = run_cmd("free -m | grep Mem")
+    # Memory - parse free output more carefully
     ram_pct = 0
-    if mem_info:
-        parts = mem_info.split()
-        if len(parts) >= 3:
-            total, used = int(parts[1]), int(parts[2])
-            ram_pct = round((used / total) * 100) if total > 0 else 0
+    try:
+        mem_total = int(run_cmd("grep MemTotal /proc/meminfo | awk '{print $2}'"))
+        mem_avail = int(run_cmd("grep MemAvailable /proc/meminfo | awk '{print $2}'"))
+        if mem_total > 0:
+            ram_pct = round(((mem_total - mem_avail) / mem_total) * 100)
+    except:
+        pass
 
     # Disk
     disk_info = run_cmd("df -h / | tail -1")
