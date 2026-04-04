@@ -9,6 +9,7 @@ import { load } from 'js-yaml';
 import { collectLocalMetrics } from './local-metrics.js';
 import { collectDockerContainers } from './docker.js';
 import { checkServiceHealth } from './health-checks.js';
+import { fetchCM4Metrics } from './remote-host.js';
 import type { DashboardState, Host, Service } from './types.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -60,6 +61,35 @@ export async function collectState(): Promise<DashboardState> {
       uptime_s: localMetrics.uptime,
       temp_c: localMetrics.temp,
     };
+  }
+
+  // Fetch CM4 metrics from remote exporter
+  const cm4Data = await fetchCM4Metrics();
+  const cm4Host = hosts.find(h => h.id === 'cm4');
+  if (cm4Host && cm4Data) {
+    cm4Host.status = 'online';
+    cm4Host.metrics = {
+      cpu_pct: cm4Data.metrics.cpu_pct,
+      ram_pct: cm4Data.metrics.ram_pct,
+      disk_pct: cm4Data.metrics.disk_pct,
+      uptime_s: cm4Data.metrics.uptime_s,
+      temp_c: cm4Data.metrics.temp_c,
+    };
+    // Update CM4 services with container status
+    for (const service of services) {
+      if (service.host_id === 'cm4') {
+        const container = cm4Data.containers.find(c =>
+          c.name.toLowerCase().includes(service.id.toLowerCase()) ||
+          service.id.toLowerCase().includes(c.name.toLowerCase())
+        );
+        if (container) {
+          service.status = container.running ? 'online' : 'offline';
+          service.container_status = container.status;
+        }
+      }
+    }
+  } else if (cm4Host) {
+    cm4Host.status = 'offline';
   }
 
   // Collect Docker container status
