@@ -31,15 +31,16 @@ def run_cmd(cmd):
 
 def get_system_metrics():
     """Collect system metrics."""
-    # CPU usage - use vmstat for more reliable reading
+    # CPU usage from /proc/stat
     cpu_pct = 0
     try:
-        vmstat = run_cmd("vmstat 1 2 | tail -1")
-        if vmstat:
-            parts = vmstat.split()
-            if len(parts) >= 15:
-                idle = int(parts[14])
-                cpu_pct = 100 - idle
+        with open("/proc/stat") as f:
+            line = f.readline()
+        parts = line.split()
+        if parts[0] == "cpu":
+            idle = int(parts[4])
+            total = sum(int(p) for p in parts[1:8])
+            cpu_pct = round(100 * (1 - idle / total)) if total > 0 else 0
     except:
         pass
 
