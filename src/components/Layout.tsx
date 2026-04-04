@@ -6,6 +6,8 @@ const navItems = [
   { to: '/services', label: 'Services' },
   { to: '/network', label: 'Network' },
   { to: '/iot', label: 'IoT' },
+  { to: '/logs', label: 'Logs' },
+  { to: '/settings', label: 'Settings' },
 ];
 
 export function Layout() {

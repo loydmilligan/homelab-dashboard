@@ -12,6 +12,33 @@ body {
   margin: 0;
 }
 
+/* Light mode */
+.light-mode body,
+.light-mode {
+  @apply bg-gray-100 text-gray-900;
+}
+
+.light-mode .bg-gray-900\/50,
+.light-mode .bg-gray-900 {
+  @apply bg-white;
+}
+
+.light-mode .border-gray-800 {
+  @apply border-gray-300;
+}
+
+.light-mode .text-gray-100 {
+  @apply text-gray-900;
+}
+
+.light-mode .text-gray-400 {
+  @apply text-gray-600;
+}
+
+.light-mode .bg-gray-800 {
+  @apply bg-gray-200;
+}
+
 #root {
   min-height: 100vh;
 }

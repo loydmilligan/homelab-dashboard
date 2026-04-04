@@ -5,6 +5,8 @@ import { Hosts } from './pages/Hosts';
 import { Services } from './pages/Services';
 import { Network } from './pages/Network';
 import { IoT } from './pages/IoT';
+import { Logs } from './pages/Logs';
+import { Settings } from './pages/Settings';
 import { Wallboard } from './pages/Wallboard';
 
 function App() {
@@ -18,6 +20,8 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/network" element={<Network />} />
           <Route path="/iot" element={<IoT />} />
+          <Route path="/logs" element={<Logs />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
 
         {/* Fullscreen wallboard for casting */}
