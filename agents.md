@@ -1,7 +1,9 @@
-# Homelab Dashboard — AI Coding Instructions
+# Homelab Dashboard — AI Agent Instructions
 
 **Document Version:** 1.0.0
 **Last Updated:** 2026-04-04
+
+> This document is for non-Claude AI coding agents. It mirrors CLAUDE.md.
 
 ## Project Overview
 
@@ -134,7 +136,6 @@ Before committing, verify:
 ### Commits
 - Format: `<type>: <description>`
 - Types: feat, fix, docs, refactor, chore
-- Include `Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>`
 
 ---
 

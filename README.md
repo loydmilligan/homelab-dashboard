@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# Homelab Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A castable, at-a-glance monitoring dashboard for homelab infrastructure.
 
-Currently, two official plugins are available:
+**Document Version:** 1.0.0
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **Live Metrics:** CPU, RAM, Disk, Temperature, Uptime
+- **Multi-Host:** Monitor laptop and CM4 from single dashboard
+- **Castable:** Fullscreen wallboard mode for TV/Chromecast
+- **Theme:** Dark/Light/System mode toggle
+- **Docker:** Production deployment via Docker Compose
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Quick Start
 
-## Expanding the ESLint configuration
+```bash
+# Install dependencies
+npm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# Development
+npm run server &  # Start backend
+npm run dev       # Start frontend
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Production
+npm run build
+docker compose up -d --build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open http://localhost:3088
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Documentation
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Document | Description |
+|----------|-------------|
+| [QUICKSTART.md](docs/QUICKSTART.md) | Getting started guide |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment processes |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design |
+| [ROADMAP.md](docs/ROADMAP.md) | Feature planning |
+| [CHANGELOG.md](docs/CHANGELOG.md) | Version history |
+| [CLAUDE.md](CLAUDE.md) | AI coding instructions |
+
+## Architecture
+
 ```
+Laptop (192.168.4.217)          CM4 (192.168.6.38)
+┌─────────────────────┐         ┌─────────────────┐
+│ nginx    :3088      │         │ exporter :9100  │
+│ backend  :3090      │◄────────│ Docker          │
+│ Docker              │         │ HA, Z2M, etc.   │
+└─────────────────────┘         └─────────────────┘
+```
+
+## Screens
+
+| Route | Status |
+|-------|--------|
+| `/` | Overview (MVP) |
+| `/hosts` | **Live** - Metrics + Exporter info |
+| `/services` | Under Construction |
+| `/network` | Under Construction |
+| `/iot` | Under Construction |
+| `/logs` | Under Construction |
+| `/settings` | **Live** - Theme toggle |
+| `/wallboard` | **Live** - TV mode |
+
+## External Access
+
+Dashboard accessible via Cloudflare tunnel at `shost.mattmariani.com`
+
+## License
+
+Private

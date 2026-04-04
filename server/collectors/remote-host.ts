@@ -15,6 +15,8 @@ export interface RemoteMetrics {
 
 export interface RemoteHostData {
   metrics: RemoteMetrics;
+  exporter_version?: string;
+  container_name?: string;
   containers: Array<{
     id: string;
     name: string;

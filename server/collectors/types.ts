@@ -22,6 +22,10 @@ export interface Host {
   tags?: string[];
   links?: Record<string, string>;
   metrics?: Metrics;
+  exporter_info?: {
+    version: string;
+    container: string;
+  };
 }
 
 export interface Service {

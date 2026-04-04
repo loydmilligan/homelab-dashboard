@@ -75,6 +75,10 @@ export async function collectState(): Promise<DashboardState> {
       uptime_s: cm4Data.metrics.uptime_s,
       temp_c: cm4Data.metrics.temp_c,
     };
+    cm4Host.exporter_info = {
+      version: cm4Data.exporter_version ?? 'unknown',
+      container: cm4Data.container_name ?? 'cm4-exporter',
+    };
     // Update CM4 services with container status
     for (const service of services) {
       if (service.host_id === 'cm4') {

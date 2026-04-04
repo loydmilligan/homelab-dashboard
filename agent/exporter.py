@@ -12,9 +12,12 @@ from datetime import datetime, timedelta
 import threading
 import time
 
+import os
+
 PORT = 9100
 LOGS_MAX_LINES = 500
 CACHE_SECONDS = 60  # Cache metrics for 60 seconds
+EXPORTER_VERSION = os.environ.get("EXPORTER_VERSION", "unknown")
 
 cache = {"data": None, "timestamp": None}
 cache_lock = threading.Lock()
@@ -129,6 +132,8 @@ def collect_all():
     return {
         "host_id": "cm4",
         "hostname": run_cmd("hostname"),
+        "exporter_version": EXPORTER_VERSION,
+        "container_name": "cm4-exporter",
         "metrics": get_system_metrics(),
         "containers": get_docker_containers(),
         "logs": get_all_logs(),

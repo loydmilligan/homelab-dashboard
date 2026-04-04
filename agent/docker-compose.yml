@@ -11,3 +11,4 @@ services:
       - /sys:/host/sys:ro
     environment:
       - HOST_PROC=/host/proc
+      - EXPORTER_VERSION=${EXPORTER_VERSION:-unknown}

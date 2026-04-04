@@ -1,5 +1,5 @@
 import { useStatePolling } from '../hooks/useStatePolling';
-import { Card, CardHeader } from '../components/Card';
+import { Card } from '../components/Card';
 import { StatusChip } from '../components/StatusChip';
 import type { Host } from '../types/inventory';
 
@@ -38,14 +38,33 @@ function MetricBar({ label, value, warn = 80, critical = 90 }: {
   );
 }
 
+function InfoTooltip({ info }: { info: { version: string; container: string } }) {
+  return (
+    <div className="group relative inline-block ml-2">
+      <span className="cursor-help text-gray-500 hover:text-gray-300 text-sm">ⓘ</span>
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 rounded-lg text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 pointer-events-none">
+        <div>Container: {info.container}</div>
+        <div>Version: {info.version}</div>
+      </div>
+    </div>
+  );
+}
+
 function HostCard({ host }: { host: Host }) {
   return (
     <Card>
-      <CardHeader
-        title={host.name}
-        subtitle={host.role}
-        action={<StatusChip status={host.status} />}
-      />
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center">
+          <div>
+            <h3 className="text-lg font-medium text-gray-100">
+              {host.name}
+              {host.exporter_info && <InfoTooltip info={host.exporter_info} />}
+            </h3>
+            <p className="text-sm text-gray-400">{host.role}</p>
+          </div>
+        </div>
+        <StatusChip status={host.status} />
+      </div>
 
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div>

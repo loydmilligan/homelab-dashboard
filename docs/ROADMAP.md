@@ -1,13 +1,29 @@
 # Homelab Dashboard Roadmap
 
+**Document Version:** 1.1.0
+**Last Updated:** 2026-04-04
+
 ## MVP (Complete)
 - [x] Hosts page with live metrics (CPU, RAM, Disk, Temp, Uptime)
 - [x] CM4 exporter agent
 - [x] Basic navigation and layout
 - [x] Settings page with theme toggle
 - [x] Cloudflare tunnel access
+- [x] Build number in UI footer
+- [x] Exporter version tooltip on hosts
+- [x] Docker Compose production deployment
+
+## Known Issues
+- [ ] **CM4 CPU showing 0%** - Parser needs fix in exporter
 
 ## Phase 1: Core Screens
+
+### Hosts Enhancements
+- [ ] Detail modal for hosts with editing capability
+- [ ] Tags field for hosts (filtering, notifications routing)
+- [ ] RAM drilldown - top processes using memory
+- [ ] CPU drilldown - top processes using CPU
+- [ ] Disk drilldown - cache clearing suggestions, available space details
 
 ### Services Page
 - [ ] Live container status from Docker
@@ -15,6 +31,7 @@
 - [ ] Service grouping by host and category
 - [ ] Links to service UIs
 - [ ] Container restart/stop actions
+- [ ] Tags field for services (categories, filtering)
 
 ### Network Page
 - [ ] Router status and metrics
@@ -37,6 +54,20 @@
 - [ ] Time range selection
 - [ ] Search functionality
 
+### Disks Page (NEW)
+- [ ] Detailed drive info by host
+- [ ] Disk usage breakdown
+- [ ] Cache analysis and cleanup recommendations
+- [ ] Network shares section
+- [ ] Backup status integration
+- [ ] AI-assisted drive cleanup suggestions
+
+### Secrets Page (NEW)
+- [ ] Secrets management interface
+- [ ] Secure storage integration
+- [ ] Secret rotation tracking
+- [ ] Access audit logging
+
 ## Phase 2: Integrations
 
 ### OpenRouter Integration
@@ -51,6 +82,7 @@
 - [ ] Topic management
 - [ ] Send test notifications
 - [ ] Alert routing configuration
+- [ ] Tag-based notification routing
 
 ### n8n Integration
 - [ ] Workflow status
@@ -117,11 +149,10 @@
 - [ ] Unified container view
 
 ## Technical Debt
-
-- [ ] Production build with backend
-- [ ] Docker Compose for full stack
+- [ ] Production build optimization
 - [ ] Authentication/authorization
 - [ ] API rate limiting
 - [ ] Caching layer
 - [ ] Unit tests
 - [ ] E2E tests
+- [ ] Performance monitoring
