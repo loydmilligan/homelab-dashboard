@@ -8,17 +8,26 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate": "tsx scripts/generate-state.ts"
+    "generate": "tsx scripts/generate-state.ts",
+    "server": "tsx server/index.ts",
+    "dev:all": "concurrently \"npm run server\" \"npm run dev\""
   },
   "dependencies": {
+    "cors": "^2.8.6",
+    "dockerode": "^4.0.10",
+    "express": "^5.2.1",
     "js-yaml": "^4.1.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.14.0"
+    "react-router-dom": "^7.14.0",
+    "systeminformation": "^5.31.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@tailwindcss/vite": "^4.2.2",
+    "@types/cors": "^2.8.19",
+    "@types/dockerode": "^4.0.1",
+    "@types/express": "^5.0.6",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",

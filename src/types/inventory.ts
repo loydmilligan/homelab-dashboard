@@ -12,6 +12,7 @@ export interface Metrics {
   ram_pct?: number;
   disk_pct?: number;
   uptime_s?: number;
+  temp_c?: number | null;
 }
 
 export interface Host {
@@ -36,6 +37,9 @@ export interface Service {
   exposes?: string[];
   backup_policy?: string;
   check_ids?: string[];
+  container_status?: string;
+  response_ms?: number;
+  last_check?: string;
 }
 
 export interface NetworkDevice {

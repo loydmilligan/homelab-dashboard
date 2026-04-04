@@ -24,18 +24,14 @@ hosts:
   - id: laptop
     name: Main Laptop
     role: compute-apps
-    status: online
+    status: unknown
     address:
-      ip: 192.168.6.100
+      ip: 192.168.4.217
       dns:
         - laptop.local
     tags:
       - workstation
       - docker-host
+      - wsl2
     links:
       portainer: http://localhost:9000
-    metrics:
-      cpu_pct: 35
-      ram_pct: 52
-      disk_pct: 68
-      uptime_s: 86400

@@ -47,14 +47,20 @@ function HostCard({ host }: { host: Host }) {
         action={<StatusChip status={host.status} />}
       />
 
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <div className="text-xs text-gray-500">IP</div>
-          <div className="text-sm text-gray-300">{host.address?.ip ?? 'N/A'}</div>
+          <div className="text-sm text-gray-300 font-mono">{host.address?.ip ?? 'N/A'}</div>
         </div>
         <div>
           <div className="text-xs text-gray-500">Uptime</div>
           <div className="text-sm text-gray-300">{formatUptime(host.metrics?.uptime_s)}</div>
+        </div>
+        <div>
+          <div className="text-xs text-gray-500">Temp</div>
+          <div className="text-sm text-gray-300">
+            {host.metrics?.temp_c != null ? `${host.metrics.temp_c}°C` : 'N/A'}
+          </div>
         </div>
       </div>
 

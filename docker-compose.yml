@@ -3,7 +3,7 @@ services:
     image: nginx:alpine
     container_name: homelab-dashboard
     ports:
-      - "3080:80"
+      - "3088:80"
     volumes:
       - ./dist:/usr/share/nginx/html:ro
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
