@@ -7,6 +7,7 @@ export default defineConfig({
   server: {
     port: 3088,
     host: true,
+    allowedHosts: ['shost.mattmariani.com'],
     proxy: {
       '/api': 'http://localhost:3090',
     },
