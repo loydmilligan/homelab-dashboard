@@ -38,6 +38,9 @@ export function Layout() {
       <main className="flex-1 max-w-7xl mx-auto px-4 py-6 w-full">
         <Outlet />
       </main>
+      <footer className="text-center text-xs text-gray-600 py-2">
+        Build: {__BUILD_NUMBER__}
+      </footer>
     </div>
   );
 }
