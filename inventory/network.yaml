@@ -1,0 +1,35 @@
+# Network Devices and Access Paths
+# Edit this file to add/modify network infrastructure
+
+network_devices:
+  - id: router
+    name: Main Router
+    type: router
+    status: online
+    endpoint: 192.168.6.1
+    notes: ISP-provided router
+
+  - id: switch-main
+    name: Main Switch
+    type: switch
+    status: online
+    notes: 8-port gigabit
+
+access_paths:
+  - id: cf-tunnel
+    name: Cloudflare Tunnel
+    type: cloudflare-tunnel
+    status: online
+    endpoint: mattmariani.com
+    services:
+      - homeassistant
+      - vaultwarden
+
+  - id: tailscale
+    name: Tailscale
+    type: tailscale
+    status: online
+    services:
+      - homeassistant
+      - gitea
+      - n8n

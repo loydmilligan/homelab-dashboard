@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+:root {
+  --color-ok: #22c55e;
+  --color-warn: #f59e0b;
+  --color-fail: #ef4444;
+  --color-unknown: #6b7280;
+}
+
+body {
+  @apply bg-gray-950 text-gray-100 antialiased;
+  margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* TV-friendly large text mode */
+.tv-mode {
+  @apply text-xl;
+}
+
+.tv-mode h1 {
+  @apply text-4xl;
+}
+
+.tv-mode h2 {
+  @apply text-3xl;
+}
+
+/* Status chip colors */
+.status-ok {
+  @apply bg-green-500/20 text-green-400 border border-green-500/30;
+}
+
+.status-warn {
+  @apply bg-amber-500/20 text-amber-400 border border-amber-500/30;
+}
+
+.status-fail {
+  @apply bg-red-500/20 text-red-400 border border-red-500/30;
+}
+
+.status-unknown {
+  @apply bg-gray-500/20 text-gray-400 border border-gray-500/30;
+}

@@ -1,0 +1,56 @@
+# IoT Hubs and Devices
+# Edit this file to add/modify IoT infrastructure
+
+iot_hubs:
+  - id: zigbee2mqtt
+    name: Zigbee2MQTT
+    host_id: cm4
+    protocol: zigbee
+    status: online
+    device_count: 12
+
+  - id: mqtt-broker
+    name: MQTT Broker
+    host_id: cm4
+    protocol: mqtt
+    status: online
+
+devices:
+  - id: office-light-1
+    name: Office Light 1
+    hub_id: zigbee2mqtt
+    type: light
+    area: office
+    status: online
+
+  - id: office-light-2
+    name: Office Light 2
+    hub_id: zigbee2mqtt
+    type: light
+    area: office
+    status: online
+
+  - id: living-room-motion
+    name: Living Room Motion
+    hub_id: zigbee2mqtt
+    type: sensor
+    area: living-room
+    status: online
+    attributes:
+      battery_pct: 85
+
+  - id: front-door-sensor
+    name: Front Door Sensor
+    hub_id: zigbee2mqtt
+    type: contact
+    area: entry
+    status: online
+    attributes:
+      battery_pct: 72
+
+  - id: thermostat
+    name: Thermostat
+    hub_id: zigbee2mqtt
+    type: climate
+    area: hallway
+    status: online

@@ -1,0 +1,90 @@
+# Homelab Services Inventory
+# Edit this file to add/modify services
+
+services:
+  # CM4 Services (Core Infrastructure)
+  - id: homeassistant
+    name: Home Assistant
+    host_id: cm4
+    category: automation
+    status: online
+    url: http://192.168.6.38:8123
+    depends_on:
+      - mosquitto
+      - zigbee2mqtt
+    exposes:
+      - ha.mattmariani.com
+    backup_policy: daily-config
+
+  - id: zigbee2mqtt
+    name: Zigbee2MQTT
+    host_id: cm4
+    category: iot
+    status: online
+    url: http://192.168.6.38:8080
+    depends_on:
+      - mosquitto
+    backup_policy: weekly-config
+
+  - id: mosquitto
+    name: Mosquitto
+    host_id: cm4
+    category: messaging
+    status: online
+    backup_policy: weekly-config
+
+  - id: vaultwarden
+    name: Vaultwarden
+    host_id: cm4
+    category: security
+    status: online
+    url: http://192.168.6.38:8222
+    exposes:
+      - vault.mattmariani.com
+    backup_policy: daily-full
+
+  - id: ntfy
+    name: ntfy
+    host_id: cm4
+    category: notifications
+    status: online
+    url: http://192.168.6.38:8090
+    backup_policy: none
+
+  - id: cloudflare-tunnel
+    name: Cloudflare Tunnel
+    host_id: cm4
+    category: access
+    status: online
+
+  # Laptop Services (Compute/Apps)
+  - id: n8n
+    name: n8n
+    host_id: laptop
+    category: automation
+    status: online
+    url: http://localhost:5678
+    backup_policy: weekly-config
+
+  - id: gitea
+    name: Gitea
+    host_id: laptop
+    category: dev
+    status: online
+    url: http://localhost:3000
+    backup_policy: daily-full
+
+  - id: dozzle
+    name: Dozzle
+    host_id: laptop
+    category: observability
+    status: online
+    url: http://localhost:8888
+
+  - id: neohabit
+    name: Neohabit
+    host_id: laptop
+    category: apps
+    status: online
+    url: http://localhost:3001
+    backup_policy: daily-full

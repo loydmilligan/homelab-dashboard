@@ -1,0 +1,41 @@
+# Homelab Hosts Inventory
+# Edit this file to add/modify hosts
+
+hosts:
+  - id: cm4
+    name: CM4
+    role: core-infra
+    status: online
+    address:
+      ip: 192.168.6.38
+      dns:
+        - cm4.local
+    tags:
+      - always-on
+      - infra
+    links:
+      dashboard: http://192.168.6.38:8123
+    metrics:
+      cpu_pct: 21
+      ram_pct: 64
+      disk_pct: 41
+      uptime_s: 123456
+
+  - id: laptop
+    name: Main Laptop
+    role: compute-apps
+    status: online
+    address:
+      ip: 192.168.6.100
+      dns:
+        - laptop.local
+    tags:
+      - workstation
+      - docker-host
+    links:
+      portainer: http://localhost:9000
+    metrics:
+      cpu_pct: 35
+      ram_pct: 52
+      disk_pct: 68
+      uptime_s: 86400
