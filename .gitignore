@@ -26,6 +26,7 @@ docs/shost_env.txt
 # Python cache
 __pycache__/
 *.pyc
+.venv/
 
 # Trash
 TRASH/

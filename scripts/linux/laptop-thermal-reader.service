@@ -7,7 +7,7 @@ After=network.target
 Type=simple
 User=loydmilligan
 Group=dialout
-ExecStart=/usr/bin/python3 /home/loydmilligan/Projects/homelab-dashboard/scripts/linux/serial-thermal-reader.py
+ExecStart=/home/loydmilligan/Projects/homelab-dashboard/scripts/linux/.venv/bin/python3 /home/loydmilligan/Projects/homelab-dashboard/scripts/linux/serial-thermal-reader.py
 Restart=always
 RestartSec=5
 
