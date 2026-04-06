@@ -53,19 +53,19 @@ def write_json_file(data: dict) -> None:
 
 
 def make_mqtt_client() -> mqtt.Client:
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     if MQTT_USERNAME:
         client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 
-    def on_connect(c, userdata, flags, rc):
-        if rc == 0:
-            log.info(f"MQTT connected to {MQTT_HOST}:{MQTT_PORT}")
+    def on_connect(c, userdata, flags, reason_code, properties):
+        if reason_code.is_failure:
+            log.warning(f"MQTT connect failed: {reason_code}")
         else:
-            log.warning(f"MQTT connect failed, rc={rc}")
+            log.info(f"MQTT connected to {MQTT_HOST}:{MQTT_PORT}")
 
-    def on_disconnect(c, userdata, rc):
-        if rc != 0:
-            log.warning(f"MQTT disconnected unexpectedly, rc={rc}")
+    def on_disconnect(c, userdata, flags, reason_code, properties):
+        if reason_code.is_failure:
+            log.warning(f"MQTT disconnected unexpectedly: {reason_code}")
 
     client.on_connect = on_connect
     client.on_disconnect = on_disconnect
