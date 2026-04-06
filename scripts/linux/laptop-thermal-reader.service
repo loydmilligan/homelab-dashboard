@@ -1,0 +1,27 @@
+[Unit]
+Description=Laptop Thermal Sensor Reader (RP2040 / MLX90614)
+Documentation=https://github.com/loydmilligan/homelab-dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=loydmilligan
+Group=dialout
+ExecStart=/usr/bin/python3 /home/loydmilligan/Projects/homelab-dashboard/scripts/linux/serial-thermal-reader.py
+Restart=always
+RestartSec=5
+
+Environment=SERIAL_PORT=/dev/ttyACM0
+Environment=OUTPUT_FILE=/home/loydmilligan/Projects/homelab-dashboard/runtime/laptop-thermal.json
+Environment=MQTT_HOST=192.168.6.38
+Environment=MQTT_PORT=1883
+Environment=MQTT_TOPIC=sensors/laptop_thermal/mlx90614
+Environment=MQTT_USERNAME=mattmqtt
+Environment=MQTT_PASSWORD=15811581
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=laptop-thermal-reader
+
+[Install]
+WantedBy=multi-user.target
