@@ -13,6 +13,11 @@ import time
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+try:
+    import docker as docker_sdk
+except Exception:
+    docker_sdk = None
+
 PORT = 9100
 LOGS_MAX_LINES = 500
 CACHE_SECONDS = 60
@@ -36,6 +41,16 @@ SHOTS_OUTPUT_GID = os.environ.get("SHOTS_OUTPUT_GID", "").strip()
 
 cache = {"data": None, "timestamp": None}
 cache_lock = threading.Lock()
+
+
+def get_docker_client():
+    """Create Docker SDK client if available."""
+    if docker_sdk is None:
+        return None
+    try:
+        return docker_sdk.DockerClient(base_url="unix:///var/run/docker.sock")
+    except Exception:
+        return None
 
 
 def run_cmd(cmd):
@@ -281,6 +296,29 @@ def get_system_metrics():
 
 def get_docker_containers():
     """Get Docker container status."""
+    client = get_docker_client()
+    if client is not None:
+        containers = []
+        try:
+            for container in client.containers.list(all=True):
+                state = getattr(container, "status", "")
+                status_text = ""
+                attrs = getattr(container, "attrs", {}) or {}
+                status_text = attrs.get("State", {}).get("Status", state) or state
+                if attrs.get("State", {}).get("Health", {}).get("Status"):
+                    health = attrs["State"]["Health"]["Status"]
+                    status_text = f"{status_text} ({health})"
+                containers.append({
+                    "id": container.short_id,
+                    "name": container.name,
+                    "image": getattr(container.image, "tags", [attrs.get("Config", {}).get("Image", "")])[0] if getattr(container, "image", None) else attrs.get("Config", {}).get("Image", ""),
+                    "status": status_text,
+                    "running": state == "running",
+                })
+            return containers
+        except Exception:
+            pass
+
     containers = []
     output = run_cmd("docker ps -a --format '{{.ID}}|{{.Names}}|{{.Image}}|{{.Status}}|{{.State}}'")
     if output:
@@ -300,6 +338,22 @@ def get_docker_containers():
 
 def get_container_logs(container_name, lines=100):
     """Get recent logs from a container."""
+    client = get_docker_client()
+    if client is not None:
+        try:
+            container = client.containers.get(container_name)
+            output = container.logs(
+                tail=lines,
+                timestamps=True,
+                stdout=True,
+                stderr=True,
+            )
+            if isinstance(output, bytes):
+                output = output.decode("utf-8", errors="replace")
+            return output[-10000:] if output else ""
+        except Exception:
+            pass
+
     output = run_cmd(f"docker logs --tail {lines} {container_name} 2>&1")
     return output[-10000:] if output else ""
 

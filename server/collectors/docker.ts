@@ -13,6 +13,7 @@ export interface ContainerInfo {
   status: string;
   running: boolean;
   created: string;
+  composeService?: string;
 }
 
 export async function collectDockerContainers(): Promise<ContainerInfo[]> {
@@ -26,6 +27,7 @@ export async function collectDockerContainers(): Promise<ContainerInfo[]> {
       status: c.Status,
       running: c.State === 'running',
       created: new Date(c.Created * 1000).toISOString(),
+      composeService: c.Labels?.['com.docker.compose.service'],
     }));
   } catch (error) {
     console.error('Error collecting Docker containers:', error);

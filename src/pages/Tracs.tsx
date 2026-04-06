@@ -85,7 +85,7 @@ export function Tracs() {
   // Get services with containers
   const services = useMemo(() => {
     if (!state?.services) return [];
-    return state.services.filter((s) => s.container_status);
+    return state.services.filter((s) => s.container_name);
   }, [state?.services]);
 
   // Auto-select first service
@@ -104,7 +104,7 @@ export function Tracs() {
       setError(null);
       try {
         const response = await fetch(
-          `/api/containers/${selectedService}/logs?tail=${tailLines}`
+          `/api/services/${encodeURIComponent(selectedService)}/logs?tail=${tailLines}`
         );
         if (!response.ok) {
           throw new Error('Failed to fetch logs');
@@ -153,7 +153,7 @@ export function Tracs() {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/containers/${selectedService}/logs?tail=${tailLines}`
+        `/api/services/${encodeURIComponent(selectedService)}/logs?tail=${tailLines}`
       );
       if (response.ok) {
         const data = await response.json();

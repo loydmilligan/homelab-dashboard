@@ -62,6 +62,8 @@ export interface Service {
   category: string;
   status: Status;
   url?: string;
+  check_type?: 'http' | 'tcp' | 'docker';
+  check_target?: string;
   depends_on?: string[];
   exposes?: string[];
   backup_policy?: string;
@@ -112,8 +114,25 @@ export interface Device {
   last_seen?: string;
   attributes?: {
     battery_pct?: number | null;
+    value?: string;
+    unit?: string | null;
+    device_class?: string;
     [key: string]: unknown;
   };
+}
+
+export interface SecretRecord {
+  id: string;
+  name: string;
+  type: 'api_key' | 'token' | 'password' | 'credential' | 'certificate';
+  service: string;
+  scope: Array<'laptop' | 'cm4'>;
+  targets?: string[];
+  source?: string;
+  last_rotated?: string;
+  rotation_policy_days?: number;
+  notes?: string;
+  status?: 'present' | 'missing';
 }
 
 export interface Check {
@@ -165,6 +184,7 @@ export interface DashboardState {
   devices: Device[];
   checks: Check[];
   backups: Backup[];
+  secrets: SecretRecord[];
   diagram?: Diagram;
   generated_at: string;
 }

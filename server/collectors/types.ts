@@ -62,13 +62,57 @@ export interface Service {
   category: string;
   status: Status;
   url?: string;
+  check_type?: 'http' | 'tcp' | 'docker';
+  check_target?: string;
   depends_on?: string[];
   exposes?: string[];
   backup_policy?: string;
   check_ids?: string[];
   container_status?: string;
+  container_name?: string;
   response_ms?: number;
   last_check?: string;
+}
+
+export interface IoTHub {
+  id: string;
+  name: string;
+  host_id: string;
+  protocol: string;
+  status: Status;
+  device_count?: number;
+  last_seen?: string;
+}
+
+export interface Device {
+  id: string;
+  name: string;
+  hub_id: string;
+  type: string;
+  area?: string;
+  status: Status;
+  last_seen?: string;
+  attributes?: {
+    battery_pct?: number | null;
+    value?: string;
+    unit?: string | null;
+    device_class?: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface SecretRecord {
+  id: string;
+  name: string;
+  type: 'api_key' | 'token' | 'password' | 'credential' | 'certificate';
+  service: string;
+  scope: Array<'laptop' | 'cm4'>;
+  targets?: string[];
+  source?: string;
+  last_rotated?: string;
+  rotation_policy_days?: number;
+  notes?: string;
+  status?: 'present' | 'missing';
 }
 
 export interface DashboardState {
@@ -76,9 +120,10 @@ export interface DashboardState {
   services: Service[];
   network_devices: unknown[];
   access_paths: unknown[];
-  iot_hubs: unknown[];
-  devices: unknown[];
+  iot_hubs: IoTHub[];
+  devices: Device[];
   checks: unknown[];
   backups: unknown[];
+  secrets: SecretRecord[];
   generated_at: string;
 }

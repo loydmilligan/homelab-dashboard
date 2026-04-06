@@ -21,11 +21,16 @@ services:
       - ./inventory:/app/inventory
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
+      - HA_HOST=${HA_HOST:-}
+      - HA_PORT=${HA_PORT:-8123}
+      - HA_LONG_LIVED_ACCESS_TOKEN=${HA_LONG_LIVED_ACCESS_TOKEN:-}
       - MQTT_HOST=${MQTT_HOST:-}
       - MQTT_PORT=${MQTT_PORT:-1883}
       - MQTT_TOPIC=${MQTT_TOPIC:-}
       - MQTT_USERNAME=${MQTT_USERNAME:-}
       - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - NTFY_AUTH_TOKEN=${NTFY_AUTH_TOKEN:-}
       - LAPTOP_SHOTS_RUNNER_URL=${LAPTOP_SHOTS_RUNNER_URL:-http://laptop-exporter:9100}
       - LAPTOP_SHOTS_RUNNER_TOKEN=${LAPTOP_SHOTS_RUNNER_TOKEN:-}
       - CM4_SHOTS_RUNNER_URL=${CM4_SHOTS_RUNNER_URL:-http://192.168.6.38:9100}

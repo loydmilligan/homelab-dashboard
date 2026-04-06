@@ -9,6 +9,8 @@ services:
     category: automation
     status: online
     url: http://192.168.6.38:8123
+    check_type: http
+    check_target: http://192.168.6.38:8123
     depends_on:
       - mosquitto
       - zigbee2mqtt
@@ -22,6 +24,8 @@ services:
     category: iot
     status: online
     url: http://192.168.6.38:8080
+    check_type: http
+    check_target: http://192.168.6.38:8080
     depends_on:
       - mosquitto
     backup_policy: weekly-config
@@ -31,6 +35,8 @@ services:
     host_id: cm4
     category: messaging
     status: online
+    check_type: tcp
+    check_target: 192.168.6.38:1883
     backup_policy: weekly-config
 
   - id: vaultwarden
@@ -39,6 +45,8 @@ services:
     category: security
     status: online
     url: http://192.168.6.38:8222
+    check_type: tcp
+    check_target: 192.168.6.38:8222
     exposes:
       - vault.mattmariani.com
     backup_policy: daily-full
@@ -49,13 +57,28 @@ services:
     category: notifications
     status: online
     url: http://192.168.6.38:8090
+    check_type: tcp
+    check_target: 192.168.6.38:8090
     backup_policy: none
 
-  - id: cloudflare-tunnel
-    name: Cloudflare Tunnel
+  - id: twofauth
+    name: 2FAuth
+    host_id: cm4
+    category: security
+    status: online
+    url: http://192.168.6.38:8000
+    check_type: http
+    check_target: http://192.168.6.38:8000
+    exposes:
+      - 2fauth.mattmariani.com
+
+  - id: ssh-cm4
+    name: SSH
     host_id: cm4
     category: access
     status: online
+    check_type: tcp
+    check_target: 192.168.6.38:22
 
   # Laptop Services (Compute/Apps)
   - id: n8n
@@ -64,27 +87,41 @@ services:
     category: automation
     status: online
     url: http://localhost:5678
+    check_type: docker
+    container_name: n8n
     backup_policy: weekly-config
 
-  - id: gitea
-    name: Gitea
-    host_id: laptop
-    category: dev
-    status: online
-    url: http://localhost:3000
-    backup_policy: daily-full
-
-  - id: dozzle
-    name: Dozzle
+  - id: mqtt-explorer
+    name: MQTT Explorer
     host_id: laptop
     category: observability
     status: online
-    url: http://localhost:8888
+    url: http://localhost:4000
+    check_type: docker
+    container_name: mqtt-explorer
 
-  - id: neohabit
-    name: Neohabit
+  - id: karakeep
+    name: Karakeep
     host_id: laptop
     category: apps
     status: online
-    url: http://localhost:3001
-    backup_policy: daily-full
+    check_type: docker
+    container_name: karakeep
+
+  - id: dumbpad
+    name: DumbPad
+    host_id: laptop
+    category: apps
+    status: online
+    url: http://localhost:3003
+    check_type: docker
+    container_name: dumbpad
+
+  - id: whopicked
+    name: WhoPicked
+    host_id: laptop
+    category: apps
+    status: online
+    url: http://localhost:4287
+    check_type: docker
+    container_name: whopicked

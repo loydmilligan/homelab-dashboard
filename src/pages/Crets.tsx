@@ -1,59 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card } from '../components/Card';
 import { PageHero } from '../components/PageHero';
-
-interface Secret {
-  id: string;
-  name: string;
-  type: 'api_key' | 'token' | 'password' | 'certificate';
-  service: string;
-  lastRotated: string;
-  rotationPolicy: number; // days
-}
-
-// Mock data - in production this would come from a secure backend
-const mockSecrets: Secret[] = [
-  {
-    id: 'openrouter-key',
-    name: 'OPENROUTER_API_KEY',
-    type: 'api_key',
-    service: 'OpenRouter',
-    lastRotated: '2026-02-15',
-    rotationPolicy: 90,
-  },
-  {
-    id: 'ha-token',
-    name: 'HA_LONG_LIVED_TOKEN',
-    type: 'token',
-    service: 'Home Assistant',
-    lastRotated: '2025-12-01',
-    rotationPolicy: 90,
-  },
-  {
-    id: 'cf-tunnel',
-    name: 'CLOUDFLARE_TUNNEL_TOKEN',
-    type: 'token',
-    service: 'Cloudflare',
-    lastRotated: '2025-10-15',
-    rotationPolicy: 180,
-  },
-  {
-    id: 'gitea-db',
-    name: 'GITEA_DB_PASSWORD',
-    type: 'password',
-    service: 'Gitea',
-    lastRotated: '2026-01-20',
-    rotationPolicy: 90,
-  },
-  {
-    id: 'ntfy-auth',
-    name: 'NTFY_AUTH_TOKEN',
-    type: 'token',
-    service: 'ntfy',
-    lastRotated: '2026-03-01',
-    rotationPolicy: 90,
-  },
-];
+import { useStatePolling } from '../hooks/useStatePolling';
+import type { SecretRecord } from '../types/inventory';
 
 function getDaysSince(dateStr: string): number {
   const date = new Date(dateStr);
@@ -62,37 +11,67 @@ function getDaysSince(dateStr: string): number {
   return Math.floor(diff / (1000 * 60 * 60 * 24));
 }
 
-function getRotationStatus(secret: Secret): { status: 'ok' | 'due' | 'overdue'; days: number } {
-  const daysSince = getDaysSince(secret.lastRotated);
-  const daysUntilDue = secret.rotationPolicy - daysSince;
+function getRotationStatus(secret: SecretRecord): {
+  status: 'ok' | 'due' | 'overdue' | 'unknown';
+  days: number | null;
+} {
+  if (!secret.last_rotated || !secret.rotation_policy_days) {
+    return { status: 'unknown', days: null };
+  }
+
+  const daysSince = getDaysSince(secret.last_rotated);
+  const daysUntilDue = secret.rotation_policy_days - daysSince;
 
   if (daysUntilDue < 0) {
     return { status: 'overdue', days: Math.abs(daysUntilDue) };
-  } else if (daysUntilDue < 14) {
+  }
+  if (daysUntilDue < 14) {
     return { status: 'due', days: daysUntilDue };
   }
   return { status: 'ok', days: daysUntilDue };
 }
 
-const typeIcons: Record<string, string> = {
+const typeIcons: Record<SecretRecord['type'], string> = {
   api_key: '🔑',
   token: '🎫',
   password: '🔐',
+  credential: '🧾',
   certificate: '📜',
 };
 
-function SecretRow({ secret }: { secret: Secret }) {
-  const rotation = getRotationStatus(secret);
+function ScopeBadge({ scope }: { scope: SecretRecord['scope'][number] }) {
+  const styles = scope === 'cm4'
+    ? 'border-sky-500/30 bg-sky-500/20 text-sky-300'
+    : 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300';
 
-  const statusBadges = {
+  return <span className={`rounded-full border px-2 py-0.5 text-xs ${styles}`}>{scope}</span>;
+}
+
+function SecretRow({ secret }: { secret: SecretRecord }) {
+  const rotation = getRotationStatus(secret);
+  const rotationBadge = {
     ok: 'bg-green-900/30 text-green-400',
     due: 'bg-amber-900/30 text-amber-400',
     overdue: 'bg-red-900/30 text-red-400',
-  };
+    unknown: 'bg-gray-800 text-gray-400',
+  } as const;
+
+  const presenceBadge = secret.status === 'present'
+    ? 'border-green-500/30 bg-green-500/15 text-green-300'
+    : 'border-red-500/30 bg-red-500/15 text-red-300';
+
+  const rotationLabel =
+    rotation.status === 'ok' && rotation.days !== null
+      ? `${rotation.days}d remaining`
+      : rotation.status === 'due' && rotation.days !== null
+        ? `Due in ${rotation.days}d`
+        : rotation.status === 'overdue' && rotation.days !== null
+          ? `${rotation.days}d overdue`
+          : 'No policy';
 
   return (
-    <tr className="border-b border-gray-800 last:border-0">
-      <td className="py-3 px-4">
+    <tr className="border-b border-gray-800 last:border-0 align-top">
+      <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <span>{typeIcons[secret.type]}</span>
           <div>
@@ -101,71 +80,150 @@ function SecretRow({ secret }: { secret: Secret }) {
           </div>
         </div>
       </td>
-      <td className="py-3 px-4 text-sm text-gray-400 capitalize">
+      <td className="px-4 py-3 text-sm text-gray-400 capitalize">
         {secret.type.replace('_', ' ')}
       </td>
-      <td className="py-3 px-4 text-sm text-gray-400">
-        {new Date(secret.lastRotated).toLocaleDateString()}
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap gap-2">
+          {secret.scope.map((scope) => (
+            <ScopeBadge key={`${secret.id}-${scope}`} scope={scope} />
+          ))}
+        </div>
+        {secret.targets && secret.targets.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {secret.targets.map((target) => (
+              <span
+                key={`${secret.id}-${target}`}
+                className="rounded bg-gray-800 px-2 py-0.5 text-xs text-gray-400"
+              >
+                {target}
+              </span>
+            ))}
+          </div>
+        )}
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-400">
+        {secret.last_rotated ? new Date(secret.last_rotated).toLocaleDateString() : 'Not tracked'}
         <div className="text-xs text-gray-500">
-          {getDaysSince(secret.lastRotated)} days ago
+          {secret.last_rotated ? `${getDaysSince(secret.last_rotated)} days ago` : secret.source ?? 'No source'}
         </div>
       </td>
-      <td className="py-3 px-4 text-sm text-gray-400">
-        {secret.rotationPolicy} days
-      </td>
-      <td className="py-3 px-4">
-        <span className={`px-2 py-1 text-xs rounded ${statusBadges[rotation.status]}`}>
-          {rotation.status === 'ok' && `${rotation.days}d remaining`}
-          {rotation.status === 'due' && `Due in ${rotation.days}d`}
-          {rotation.status === 'overdue' && `${rotation.days}d overdue`}
-        </span>
+      <td className="px-4 py-3">
+        <div className="flex flex-col items-start gap-2">
+          <span className={`rounded px-2 py-1 text-xs ${rotationBadge[rotation.status]}`}>
+            {rotationLabel}
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 text-xs ${presenceBadge}`}>
+            {secret.status === 'present' ? 'Present in env' : 'Missing from env'}
+          </span>
+        </div>
       </td>
     </tr>
   );
 }
 
 export function Crets() {
-  const [filter, setFilter] = useState<'all' | 'due' | 'overdue'>('all');
+  const { state, loading, error } = useStatePolling();
+  const [filter, setFilter] = useState<'all' | 'due' | 'overdue' | 'missing'>('all');
+  const [scopeFilter, setScopeFilter] = useState<'all' | 'laptop' | 'cm4'>('all');
+
+  const secrets = state?.secrets ?? [];
 
   const filteredSecrets = useMemo(() => {
-    if (filter === 'all') return mockSecrets;
-    return mockSecrets.filter((s) => {
-      const rotation = getRotationStatus(s);
-      if (filter === 'due') return rotation.status === 'due';
-      if (filter === 'overdue') return rotation.status === 'overdue';
+    return secrets.filter((secret) => {
+      if (scopeFilter !== 'all' && !secret.scope.includes(scopeFilter)) {
+        return false;
+      }
+
+      if (filter === 'missing') {
+        return secret.status === 'missing';
+      }
+
+      if (filter === 'all') {
+        return true;
+      }
+
+      const rotation = getRotationStatus(secret);
+      if (filter === 'due') {
+        return rotation.status === 'due';
+      }
+      if (filter === 'overdue') {
+        return rotation.status === 'overdue';
+      }
       return true;
     });
-  }, [filter]);
+  }, [filter, scopeFilter, secrets]);
 
   const stats = useMemo(() => {
-    let ok = 0, due = 0, overdue = 0;
-    for (const secret of mockSecrets) {
+    let ok = 0;
+    let due = 0;
+    let overdue = 0;
+    let missing = 0;
+
+    for (const secret of secrets) {
       const rotation = getRotationStatus(secret);
-      if (rotation.status === 'ok') ok++;
-      else if (rotation.status === 'due') due++;
-      else overdue++;
+      if (rotation.status === 'ok') {
+        ok += 1;
+      } else if (rotation.status === 'due') {
+        due += 1;
+      } else if (rotation.status === 'overdue') {
+        overdue += 1;
+      }
+
+      if (secret.status === 'missing') {
+        missing += 1;
+      }
     }
-    return { total: mockSecrets.length, ok, due, overdue };
-  }, []);
+
+    return { total: secrets.length, ok, due, overdue, missing };
+  }, [secrets]);
+
+  if (loading) {
+    return <div className="text-gray-400">Loading...</div>;
+  }
+
+  if (error || !state) {
+    return (
+      <div className="text-red-400">
+        Failed to load state: {error?.message ?? 'Unknown error'}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <PageHero
         title="Crets"
-        subtitle="Secret inventory and rotation metadata. Values stay out of the UI; the goal here is awareness and maintenance."
+        subtitle="Secret metadata, scope, rotation, and env presence. Values stay out of the UI."
         iconKey="crets"
         iconClassName="bg-gradient-to-br from-violet-500/30 via-fuchsia-500/20 to-cyan-400/20 text-violet-100"
         accentClassName="before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-gradient-to-b before:from-violet-400 before:to-cyan-400"
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-2 bg-gray-800 rounded-lg p-1">
-          {(['all', 'due', 'overdue'] as const).map((option) => (
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 rounded-lg bg-gray-800 p-1">
+          {(['all', 'due', 'overdue', 'missing'] as const).map((option) => (
             <button
               key={option}
               onClick={() => setFilter(option)}
-              className={`px-3 py-1 text-sm rounded transition-colors capitalize ${
+              className={`rounded px-3 py-1 text-sm capitalize transition-colors ${
                 filter === option
+                  ? 'bg-gray-700 text-gray-100'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 rounded-lg bg-gray-800 p-1">
+          {(['all', 'laptop', 'cm4'] as const).map((option) => (
+            <button
+              key={option}
+              onClick={() => setScopeFilter(option)}
+              className={`rounded px-3 py-1 text-sm capitalize transition-colors ${
+                scopeFilter === option
                   ? 'bg-gray-700 text-gray-100'
                   : 'text-gray-400 hover:text-gray-200'
               }`}
@@ -176,15 +234,14 @@ export function Crets() {
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         <Card className="text-center">
           <div className="text-3xl font-bold text-gray-100">{stats.total}</div>
           <div className="text-sm text-gray-400">Total Secrets</div>
         </Card>
         <Card className="text-center">
           <div className="text-3xl font-bold text-green-400">{stats.ok}</div>
-          <div className="text-sm text-gray-400">OK</div>
+          <div className="text-sm text-gray-400">Healthy</div>
         </Card>
         <Card className="text-center">
           <div className="text-3xl font-bold text-amber-400">{stats.due}</div>
@@ -194,18 +251,26 @@ export function Crets() {
           <div className="text-3xl font-bold text-red-400">{stats.overdue}</div>
           <div className="text-sm text-gray-400">Overdue</div>
         </Card>
+        <Card className="text-center">
+          <div className="text-3xl font-bold text-rose-400">{stats.missing}</div>
+          <div className="text-sm text-gray-400">Missing</div>
+        </Card>
       </div>
 
-      {/* Secrets Table */}
-      <Card className="p-0 overflow-hidden">
+      <div className="rounded-lg bg-gray-800/50 p-4 text-sm text-gray-500">
+        Values are still kept outside Shost. This page is now the control plane for scope,
+        target mapping, env presence, and rotation reminders before the encrypted sync layer exists.
+      </div>
+
+      <Card className="overflow-hidden p-0">
         <table className="w-full">
           <thead>
-            <tr className="text-left text-gray-400 border-b border-gray-700 bg-gray-800/50">
-              <th className="py-3 px-4 font-medium">Secret</th>
-              <th className="py-3 px-4 font-medium">Type</th>
-              <th className="py-3 px-4 font-medium">Last Rotated</th>
-              <th className="py-3 px-4 font-medium">Policy</th>
-              <th className="py-3 px-4 font-medium">Status</th>
+            <tr className="border-b border-gray-700 bg-gray-800/50 text-left text-gray-400">
+              <th className="px-4 py-3 font-medium">Secret</th>
+              <th className="px-4 py-3 font-medium">Type</th>
+              <th className="px-4 py-3 font-medium">Scope / Targets</th>
+              <th className="px-4 py-3 font-medium">Last Rotated</th>
+              <th className="px-4 py-3 font-medium">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -214,18 +279,13 @@ export function Crets() {
             ))}
           </tbody>
         </table>
+
         {filteredSecrets.length === 0 && (
-          <div className="text-center text-gray-500 py-8">
-            No secrets match the current filter
+          <div className="py-8 text-center text-gray-500">
+            No secrets match the current filters.
           </div>
         )}
       </Card>
-
-      {/* Security Notice */}
-      <div className="text-sm text-gray-500 bg-gray-800/50 rounded-lg p-4">
-        <strong>Note:</strong> This page displays secret metadata only (names, rotation dates, policies).
-        Actual secret values are never exposed through this interface.
-      </div>
     </div>
   );
 }

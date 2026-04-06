@@ -16,7 +16,9 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { load, dump } from 'js-yaml';
 import { collectState } from './collectors/index.js';
+import { fetchHostMetrics } from './collectors/remote-host.js';
 import { notificationsRouter } from './routes/notifications.js';
+import { servicesRouter } from './routes/services.js';
 import { shotsRouter } from './routes/shots.js';
 import { getShotsScheduler } from './shots/scheduler.js';
 
@@ -26,12 +28,14 @@ const INVENTORY_DIR = join(__dirname, '..', 'inventory');
 
 const PORT = process.env.PORT || 3090;
 const docker = new Docker({ socketPath: '/var/run/docker.sock' });
+const CM4_EXPORTER_URL = process.env.CM4_EXPORTER_URL ?? 'http://192.168.6.38:9100/metrics';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/backups', shotsRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/services', servicesRouter);
 
 // Serve current state
 app.get('/api/state', async (_req, res) => {
@@ -48,6 +52,14 @@ app.get('/api/state', async (_req, res) => {
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+function decodeDockerLogBuffer(logs: Buffer) {
+  return logs
+    .toString('utf8')
+    .split('\n')
+    .map((line) => line.slice(8))
+    .join('\n');
+}
 
 // Container actions
 app.post('/api/containers/:name/restart', async (req, res) => {
@@ -126,15 +138,67 @@ app.get('/api/containers/:name/logs', async (req, res) => {
       tail,
       timestamps: true,
     });
-    // Parse docker logs format (remove header bytes)
-    const logText = logs.toString('utf8')
-      .split('\n')
-      .map(line => line.slice(8)) // Remove 8-byte header
-      .join('\n');
+    const logText = decodeDockerLogBuffer(logs);
     res.json({ logs: logText });
   } catch (error) {
     console.error(`Error getting logs for ${name}:`, error);
     res.status(500).json({ error: 'Failed to get container logs' });
+  }
+});
+
+app.get('/api/services/:id/logs', async (req, res) => {
+  const { id } = req.params;
+  const tail = parseInt(req.query.tail as string) || 100;
+
+  try {
+    const state = await collectState();
+    const service = state.services.find((entry) => entry.id === id);
+
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    if (!service.container_name) {
+      return res.status(409).json({ error: 'Service does not expose container logs' });
+    }
+
+    if (service.host_id === 'cm4') {
+      const remote = await fetchHostMetrics(CM4_EXPORTER_URL);
+      if (!remote) {
+        return res.status(502).json({ error: 'Failed to reach CM4 exporter' });
+      }
+
+      const logs = remote.logs?.[service.container_name];
+      if (typeof logs !== 'string') {
+        return res.status(404).json({ error: 'Remote container logs not available' });
+      }
+
+      const logLines = logs.split('\n').filter(Boolean);
+      res.json({ logs: logLines.slice(-tail).join('\n') });
+      return;
+    }
+
+    const containers = await docker.listContainers({ all: true });
+    const target = containers.find((container) =>
+      container.Names.some((name) => name.replace(/^\//, '') === service.container_name)
+    );
+
+    if (!target) {
+      return res.status(404).json({ error: 'Container not found' });
+    }
+
+    const container = docker.getContainer(target.Id);
+    const logs = await container.logs({
+      stdout: true,
+      stderr: true,
+      tail,
+      timestamps: true,
+    });
+
+    res.json({ logs: decodeDockerLogBuffer(logs) });
+  } catch (error) {
+    console.error(`Error getting logs for service ${id}:`, error);
+    res.status(500).json({ error: 'Failed to get service logs' });
   }
 });
 
@@ -179,6 +243,7 @@ app.listen(PORT, () => {
   console.log(`Dashboard backend running on http://localhost:${PORT}`);
   console.log(`  GET   /api/state - Full state with metrics`);
   console.log(`  GET   /api/health - Health check`);
+  console.log(`  GET   /api/services/:id/logs - Get service logs (local or remote)`);
   console.log(`  PATCH /api/hosts/:id - Update host metadata`);
   console.log(`  POST  /api/containers/:name/restart - Restart container`);
   console.log(`  POST  /api/containers/:name/stop - Stop container`);

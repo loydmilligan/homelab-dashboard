@@ -8,10 +8,16 @@ import { fileURLToPath } from 'url';
 import { load } from 'js-yaml';
 import { collectDockerContainers } from './docker.js';
 import { checkServiceHealth } from './health-checks.js';
+import { collectHomeAssistantIot } from './home-assistant.js';
 import { getLaptopMqttThermalReading } from './mqtt-thermal.js';
 import { fetchHostMetrics } from './remote-host.js';
-import type { DashboardState, Host, Service } from './types.js';
+import { collectSecretInventory } from './secrets.js';
+import type { DashboardState, Host, IoTHub, Service } from './types.js';
+import { emitNotification } from '../notifications/service.js';
 import { getShotsStore } from '../shots/store.js';
+
+// Track previous service statuses to detect transitions and avoid repeated alerts
+const previousServiceStatuses = new Map<string, string>();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -25,10 +31,31 @@ interface InventoryFile {
   iot_hubs?: unknown[];
   devices?: unknown[];
   backups?: unknown[];
+  secrets?: unknown[];
 }
 
 const LAPTOP_EXPORTER_URL = process.env.LAPTOP_EXPORTER_URL ?? 'http://laptop-exporter:9100/metrics';
 const CM4_EXPORTER_URL = process.env.CM4_EXPORTER_URL ?? 'http://192.168.6.38:9100/metrics';
+
+function findMatchingContainer(service: Service, containers: Awaited<ReturnType<typeof collectDockerContainers>>) {
+  const requestedName = service.container_name?.toLowerCase();
+  const serviceId = service.id.toLowerCase();
+
+  return containers.find((container) => {
+    const containerName = container.name.toLowerCase();
+    const composeService = container.composeService?.toLowerCase();
+
+    if (requestedName) {
+      return containerName === requestedName || composeService === requestedName;
+    }
+
+    return (
+      containerName.includes(serviceId) ||
+      serviceId.includes(containerName) ||
+      composeService === serviceId
+    );
+  });
+}
 
 function loadYaml<T>(filename: string): T {
   const filepath = join(INVENTORY_DIR, filename);
@@ -48,6 +75,7 @@ export async function collectState(): Promise<DashboardState> {
   const iotFile = loadYaml<InventoryFile>('iot.yaml');
   const backupsFile = loadYaml<InventoryFile>('backups.yaml');
   const runtimeBackups = getShotsStore().listLegacyBackups();
+  const secrets = collectSecretInventory(INVENTORY_DIR);
 
   const hosts = hostsFile.hosts ?? [];
   const services = servicesFile.services ?? [];
@@ -118,6 +146,7 @@ export async function collectState(): Promise<DashboardState> {
         );
         if (container) {
           service.status = container.running ? 'online' : 'offline';
+          service.container_name = container.name;
           service.container_status = container.status;
         }
       }
@@ -132,14 +161,18 @@ export async function collectState(): Promise<DashboardState> {
   // Update services with Docker status
   for (const service of services) {
     if (service.host_id === 'laptop') {
-      const container = containers.find(c =>
-        c.name.toLowerCase().includes(service.id.toLowerCase()) ||
-        service.id.toLowerCase().includes(c.name.toLowerCase())
-      );
-      if (container) {
-        service.status = container.running ? 'online' : 'offline';
-        service.container_status = container.status;
+      const container = findMatchingContainer(service, containers);
+      if (!container) {
+        if (service.check_type === 'docker' || service.container_name) {
+          service.status = 'offline';
+          service.container_status = 'container not found';
+        }
+        continue;
       }
+
+      service.container_name = container.name;
+      service.status = container.running ? 'online' : 'offline';
+      service.container_status = container.status;
     }
   }
 
@@ -149,20 +182,53 @@ export async function collectState(): Promise<DashboardState> {
     const service = services.find(s => s.id === result.id);
     if (service) {
       service.status = result.healthy ? 'online' : 'offline';
-      service.response_ms = result.responseMs;
+      service.response_ms = result.responseMs ?? undefined;
       service.last_check = result.timestamp;
     }
   }
+
+  // Detect service status transitions and emit notifications
+  const hostNames = new Map(hosts.map(h => [h.id, h.name]));
+  for (const service of services) {
+    const prev = previousServiceStatuses.get(service.id);
+    const curr = service.status;
+    if (prev !== undefined && prev !== curr) {
+      const hostLabel = hostNames.get(service.host_id) ?? service.host_id;
+      if (curr === 'offline') {
+        emitNotification({
+          source: 'wapps',
+          event_key: `service_down_${service.id}`,
+          title: `Service Down: ${service.name}`,
+          message: `${service.name} on ${hostLabel} is offline`,
+          severity: 'error',
+          channels: ['browser', 'ntfy'],
+        }).catch((err) => console.error('Failed to emit service-down notification:', err));
+      } else if (prev === 'offline' && curr === 'online') {
+        emitNotification({
+          source: 'wapps',
+          event_key: `service_recovered_${service.id}`,
+          title: `Service Recovered: ${service.name}`,
+          message: `${service.name} on ${hostLabel} is back online`,
+          severity: 'success',
+          channels: ['browser', 'ntfy'],
+        }).catch((err) => console.error('Failed to emit service-recovered notification:', err));
+      }
+    }
+    previousServiceStatuses.set(service.id, curr);
+  }
+
+  const haIot = await collectHomeAssistantIot((iotFile.iot_hubs ?? []) as IoTHub[]);
 
   return {
     hosts,
     services,
     network_devices: networkFile.network_devices ?? [],
     access_paths: networkFile.access_paths ?? [],
-    iot_hubs: iotFile.iot_hubs ?? [],
-    devices: iotFile.devices ?? [],
+    iot_hubs: haIot.iot_hubs,
+    devices: haIot.devices.length > 0 ? haIot.devices : (iotFile.devices ?? []),
     checks: [],
     backups: runtimeBackups.length > 0 ? runtimeBackups : backupsFile.backups ?? [],
+    secrets,
     generated_at: new Date().toISOString(),
   };
 }
