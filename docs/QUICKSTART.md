@@ -34,9 +34,11 @@ npm run dev
 # Build and deploy
 npm run build
 docker compose up -d --build
+docker compose restart frontend
 
 # Verify
 curl http://localhost:3088/api/health
+curl http://localhost:9101/health
 ```
 
 ## Deploy CM4 Exporter

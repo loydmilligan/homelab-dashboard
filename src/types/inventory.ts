@@ -7,12 +7,37 @@ export interface Address {
   dns?: string[];
 }
 
+export interface ProcessInfo {
+  user: string;
+  pid: string;
+  cpu_pct: number;
+  mem_pct: number;
+  command: string;
+}
+
+export interface DiskInfo {
+  filesystem: string;
+  size: string;
+  used: string;
+  available: string;
+  use_pct: number;
+  mount: string;
+}
+
 export interface Metrics {
   cpu_pct?: number;
   ram_pct?: number;
+  ram_total_mb?: number;
+  ram_used_mb?: number;
   disk_pct?: number;
   uptime_s?: number;
   temp_c?: number | null;
+  ambient_temp_c?: number | null;
+  surface_temp_c?: number | null;
+  temp_source?: string | null;
+  top_cpu?: ProcessInfo[];
+  top_mem?: ProcessInfo[];
+  disks?: DiskInfo[];
 }
 
 export interface Host {
@@ -42,8 +67,10 @@ export interface Service {
   backup_policy?: string;
   check_ids?: string[];
   container_status?: string;
+  container_name?: string;
   response_ms?: number;
   last_check?: string;
+  tags?: string[];
 }
 
 export interface NetworkDevice {

@@ -9,10 +9,13 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                        Laptop                                │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │   nginx     │  │   Backend   │  │   Docker Daemon     │  │
-│  │  (frontend) │──│   (API)     │──│   (containers)      │  │
-│  │   :3088     │  │   :3090     │  │                     │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│  │   nginx     │  │   Backend   │  │  laptop-exporter    │  │
+│  │  (frontend) │──│   (API)     │──│       :9101         │  │
+│  │   :3088     │  │   :3090     │  └─────────────────────┘  │
+│  └─────────────┘  └─────────────┘  ┌─────────────────────┐  │
+│                                     │   Docker Daemon     │  │
+│                                     │   (containers)      │  │
+│                                     └─────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
           │                 │
           │                 │ HTTP polling
@@ -39,17 +42,19 @@
 - **Tech:** Express + TypeScript
 - **Port:** 3090 (internal)
 - **Responsibilities:**
-  - Collect local system metrics (systeminformation)
+  - Fetch laptop host metrics (local exporter)
   - Query Docker for container status
   - Fetch remote host metrics (CM4 exporter)
   - Run HTTP health checks on services
   - Serve merged state as JSON
 
-### CM4 Exporter (Python container)
+### Host Exporters (Python containers)
 - **Tech:** Python 3 + http.server
-- **Port:** 9100
+- **Ports:** Laptop `:9101`, CM4 `:9100`
 - **Responsibilities:**
   - System metrics (CPU, RAM, disk, temp)
+  - Top CPU and memory processes
+  - Disk breakdown
   - Docker container status
   - Container logs (last 100 lines each)
   - Cached responses (60s)
@@ -58,7 +63,7 @@
 
 1. **Frontend** polls `/api/state` every 30 seconds
 2. **Backend** collects:
-   - Local metrics via systeminformation
+   - Laptop metrics via HTTP to laptop-exporter:9100
    - Docker containers via Docker socket
    - CM4 metrics via HTTP to 192.168.6.38:9100
    - Service health via HTTP checks
@@ -70,7 +75,7 @@
 
 ```
 homelab-dashboard/
-├── agent/                 # CM4 exporter
+├── agent/                 # Host exporter image (laptop + CM4)
 │   ├── exporter.py
 │   ├── Dockerfile
 │   └── docker-compose.yml
@@ -108,5 +113,5 @@ homelab-dashboard/
 To add a new host:
 1. Deploy exporter to new host
 2. Add host to `inventory/hosts.yaml`
-3. Add collector URL to `server/collectors/remote-host.ts`
+3. Add collector URL to the backend collector
 4. Redeploy backend

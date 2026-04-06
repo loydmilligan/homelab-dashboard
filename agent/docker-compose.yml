@@ -3,12 +3,24 @@ services:
     build: .
     container_name: cm4-exporter
     restart: unless-stopped
+    pid: host
     ports:
       - "9100:9100"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
+      - /:/host/rootfs:ro
+      - ${SHOTS_DEST_HOST_PATH:-/home/mmariani/shots-backups}:/host/shots-dest
     environment:
       - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+      - HOST_ROOTFS=/host/rootfs
+      - HOST_ID=cm4
+      - CONTAINER_NAME=cm4-exporter
       - EXPORTER_VERSION=${EXPORTER_VERSION:-unknown}
+      - SHOTS_RUNNER_TOKEN=${SHOTS_RUNNER_TOKEN:-}
+      - SHOTS_SOURCE_ROOTS=${SHOTS_SOURCE_ROOTS:-/home,/srv,/mnt,/opt,/tmp}
+      - SHOTS_DEST_ROOT=/host/shots-dest
+      - SHOTS_OUTPUT_UID=${SHOTS_OUTPUT_UID:-1000}
+      - SHOTS_OUTPUT_GID=${SHOTS_OUTPUT_GID:-1000}

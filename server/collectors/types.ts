@@ -5,9 +5,36 @@ export type Status = 'online' | 'offline' | 'degraded' | 'unknown';
 export interface Metrics {
   cpu_pct?: number;
   ram_pct?: number;
+  ram_total_mb?: number;
+  ram_used_mb?: number;
   disk_pct?: number;
   uptime_s?: number;
   temp_c?: number | null;
+  ambient_temp_c?: number | null;
+  surface_temp_c?: number | null;
+  temp_source?: string | null;
+  top_cpu?: Array<{
+    user: string;
+    pid: string;
+    cpu_pct: number;
+    mem_pct: number;
+    command: string;
+  }>;
+  top_mem?: Array<{
+    user: string;
+    pid: string;
+    cpu_pct: number;
+    mem_pct: number;
+    command: string;
+  }>;
+  disks?: Array<{
+    filesystem: string;
+    size: string;
+    used: string;
+    available: string;
+    use_pct: number;
+    mount: string;
+  }>;
 }
 
 export interface Host {

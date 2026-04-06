@@ -17,6 +17,49 @@ services:
       dockerfile: Dockerfile.backend
     container_name: homelab-backend
     volumes:
-      - ./inventory:/app/inventory:ro
+      - ./data:/app/data
+      - ./inventory:/app/inventory
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - MQTT_HOST=${MQTT_HOST:-}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - MQTT_TOPIC=${MQTT_TOPIC:-}
+      - MQTT_USERNAME=${MQTT_USERNAME:-}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+      - LAPTOP_SHOTS_RUNNER_URL=${LAPTOP_SHOTS_RUNNER_URL:-http://laptop-exporter:9100}
+      - LAPTOP_SHOTS_RUNNER_TOKEN=${LAPTOP_SHOTS_RUNNER_TOKEN:-}
+      - CM4_SHOTS_RUNNER_URL=${CM4_SHOTS_RUNNER_URL:-http://192.168.6.38:9100}
+      - CM4_SHOTS_RUNNER_TOKEN=${CM4_SHOTS_RUNNER_TOKEN:-}
+    depends_on:
+      - laptop-exporter
     restart: unless-stopped
+
+  laptop-exporter:
+    build:
+      context: ./agent
+    container_name: laptop-exporter
+    restart: unless-stopped
+    pid: host
+    ports:
+      - "9101:9100"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/rootfs:ro
+      - ${LAPTOP_SENSOR_MOUNT_PATH:-./runtime}:/sensor/rp2040:ro
+      - ./runtime:/app/runtime:ro
+      - ${LAPTOP_SHOTS_DEST_HOST_PATH:-./data/laptop-shots}:/host/shots-dest
+    environment:
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+      - HOST_ROOTFS=/host/rootfs
+      - HOST_ID=laptop
+      - CONTAINER_NAME=laptop-exporter
+      - HOST_TEMP_FILE=${LAPTOP_HOST_TEMP_FILE:-/sensor/rp2040/laptop-thermal.json}
+      - EXPORTER_VERSION=${EXPORTER_VERSION:-unknown}
+      - SHOTS_RUNNER_TOKEN=${LAPTOP_SHOTS_RUNNER_TOKEN:-}
+      - SHOTS_SOURCE_ROOTS=${LAPTOP_SHOTS_SOURCE_ROOTS:-/home,/srv,/mnt,/opt,/tmp}
+      - SHOTS_DEST_ROOT=/host/shots-dest
+      - SHOTS_OUTPUT_UID=${LAPTOP_SHOTS_OUTPUT_UID:-1000}
+      - SHOTS_OUTPUT_GID=${LAPTOP_SHOTS_OUTPUT_GID:-1000}

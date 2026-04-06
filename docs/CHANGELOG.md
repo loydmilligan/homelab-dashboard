@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 - CM4 exporter agent for remote host metrics
 - Settings page with dark/light/system theme toggle
 - Overview page with summary stats
-- Services, Network, IoT, Logs pages (under construction)
+- Branded IA direction for Wapps, Works, Yots, Stows, Shots, Tracs, and Crets
 - Docker Compose production deployment
 - Cloudflare tunnel support (shost.mattmariani.com)
 - Build number display in UI footer

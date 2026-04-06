@@ -1,0 +1,14 @@
+timestamp: 2026-04-05T19:52:11.329066-07:00
+project: homelab-dashboard
+category: repos
+source_root: /home/mmariani/Projects/homelab-dashboard
+archive: /mnt/cm4-project-preservation/repos/homelab-dashboard/homelab-dashboard-full.tar.gz
+mode: full-tar
+---
+timestamp: 2026-04-05T19:53:22.100406-07:00
+project: homelab-dashboard
+category: repos
+source_root: /home/mmariani/Projects/homelab-dashboard
+mode: repo-tree-excluding-dependency-build-cache-dirs
+excludes: node_modules, .venv, venv, __pycache__, dist, build, .next, coverage, .turbo, .cache, .pytest_cache, .mypy_cache, test-results
+---

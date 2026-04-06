@@ -1,6 +1,7 @@
 import { useStatePolling } from '../hooks/useStatePolling';
 import { Card, StatCard } from '../components/Card';
 import { StatusChip } from '../components/StatusChip';
+import { PageHero } from '../components/PageHero';
 
 export function Overview() {
   const { state, loading, error } = useStatePolling();
@@ -27,7 +28,13 @@ export function Overview() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-semibold text-gray-100">Overview</h2>
+      <PageHero
+        title="Overview"
+        subtitle="Shost's control-room summary for hosts, Wapps health, Yots activity, and Shots backup status."
+        iconKey="overview"
+        iconClassName="bg-gradient-to-br from-cyan-500/30 via-sky-500/20 to-lime-400/20 text-cyan-200"
+        accentClassName="before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-gradient-to-b before:from-cyan-400 before:to-lime-400"
+      />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

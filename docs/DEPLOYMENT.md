@@ -6,7 +6,7 @@
 ## Overview
 
 There are two deployment types:
-1. **Main Dashboard** - Frontend + Backend on laptop
+1. **Main Dashboard** - Frontend + Backend + laptop exporter on laptop
 2. **Host Exporters** - Metrics agents on remote hosts (CM4, etc.)
 
 ---
@@ -38,7 +38,7 @@ npm run build
 # 4. Deploy with Docker Compose
 docker compose up -d --build
 
-# 5. Restart frontend to pick up new static files
+# 5. Restart frontend to pick up new static files and refresh backend DNS
 docker compose restart frontend
 
 # 6. Get build number for verification
@@ -47,9 +47,10 @@ git rev-parse --short HEAD
 
 ### Post-Deployment Verification
 1. Open dashboard URL (http://localhost:3088 or shost.mattmariani.com)
-2. Check footer for build number (format: `YYYYMMDDHHMM-<commit>`)
+2. Check footer for build number (format: `B000001`)
 3. Verify API is responding: `curl http://localhost:3088/api/health`
-4. **Report build number in chat for testing confirmation**
+4. Verify laptop exporter is responding: `curl http://localhost:9101/health`
+5. **Report build number in chat for testing confirmation**
 
 ### Rollback
 ```bash
@@ -99,13 +100,16 @@ curl http://192.168.6.38:9100/health
 
 ### Post-Deployment Verification
 1. Check exporter health: `curl http://192.168.6.38:9100/health`
-2. Check metrics: `curl http://192.168.6.38:9100/metrics | head -20`
-3. Verify in dashboard - host should show updated metrics
-4. Check tooltip on host card for exporter version
+2. Check shots runner health: `curl http://192.168.6.38:9100/shots/health`
+3. Verify the CM4 `.env` includes `SHOTS_RUNNER_TOKEN` and `SHOTS_DEST_HOST_PATH`
+4. Verify the dashboard backend environment includes matching `CM4_SHOTS_RUNNER_TOKEN`
+5. Check metrics: `curl http://192.168.6.38:9100/metrics | head -20`
+6. Verify in dashboard - host should show updated metrics
+7. Check tooltip on host card for exporter version
 
 ### Adding New Hosts
 1. Copy `agent/` directory to new host
-2. Update `server/collectors/remote-host.ts` with new host URL
+2. Add a collector URL for the new host in the backend collector
 3. Add host to `inventory/hosts.yaml`
 4. Redeploy main dashboard
 
@@ -113,7 +117,7 @@ curl http://192.168.6.38:9100/health
 
 ## Build Number Format
 
-- **Dashboard:** `YYYYMMDDHHMM-<git-short-hash>`
+- **Dashboard:** sequential ID like `B000406`
 - **Exporter:** `<git-short-hash>` (shown in host tooltip)
 
 ---

@@ -1,0 +1,54 @@
+# Stows (Storage) Inventory
+# Edit this file to add/modify storage configuration
+
+network_shares:
+  - id: nas-media
+    name: Media Share
+    host: nas
+    path: /media
+    mount_point: /mnt/media
+    protocol: nfs
+    status: online
+
+  - id: nas-backups
+    name: Backups Share
+    host: nas
+    path: /backups
+    mount_point: /mnt/backups
+    protocol: nfs
+    status: online
+
+cache_locations:
+  - id: docker-images
+    name: Docker Images
+    path: /var/lib/docker
+    description: Docker image cache and container layers
+
+  - id: apt-cache
+    name: APT Cache
+    path: /var/cache/apt
+    description: APT package cache
+
+  - id: npm-cache
+    name: NPM Cache
+    path: ~/.npm
+    description: NPM package cache
+
+cleanup_recommendations:
+  - id: docker-prune
+    name: Docker Prune
+    command: docker system prune -a
+    description: Remove unused images, containers, networks
+    estimated_savings: 2-5 GB
+
+  - id: apt-clean
+    name: APT Clean
+    command: sudo apt-get clean
+    description: Clear APT package cache
+    estimated_savings: 200-500 MB
+
+  - id: journal-vacuum
+    name: Journal Vacuum
+    command: sudo journalctl --vacuum-size=100M
+    description: Reduce systemd journal size
+    estimated_savings: 500 MB - 2 GB

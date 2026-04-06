@@ -11,6 +11,21 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+.build-sequence
+runtime/*.json
+data/
+
+# Generated assets
+generated/
+
+# Credentials/secrets docs
+docs/shost_env.txt
+
+# Python cache
+__pycache__/
+*.pyc
 
 # Trash
 TRASH/

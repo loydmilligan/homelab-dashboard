@@ -1,16 +1,42 @@
 /**
- * Fetches metrics from remote host exporters (CM4)
+ * Fetches metrics from host exporters.
  */
 
-const CM4_URL = 'http://192.168.6.38:9100/metrics';
 const TIMEOUT_MS = 5000;
 
 export interface RemoteMetrics {
   cpu_pct: number;
   ram_pct: number;
+  ram_total_mb?: number;
+  ram_used_mb?: number;
   disk_pct: number;
   temp_c: number | null;
+  ambient_temp_c?: number | null;
+  surface_temp_c?: number | null;
+  temp_source?: string | null;
   uptime_s: number;
+  top_cpu?: Array<{
+    user: string;
+    pid: string;
+    cpu_pct: number;
+    mem_pct: number;
+    command: string;
+  }>;
+  top_mem?: Array<{
+    user: string;
+    pid: string;
+    cpu_pct: number;
+    mem_pct: number;
+    command: string;
+  }>;
+  disks?: Array<{
+    filesystem: string;
+    size: string;
+    used: string;
+    available: string;
+    use_pct: number;
+    mount: string;
+  }>;
 }
 
 export interface RemoteHostData {
@@ -28,16 +54,16 @@ export interface RemoteHostData {
   collected_at: string;
 }
 
-export async function fetchCM4Metrics(): Promise<RemoteHostData | null> {
+export async function fetchHostMetrics(url: string): Promise<RemoteHostData | null> {
   try {
-    const response = await fetch(CM4_URL, {
+    const response = await fetch(url, {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (response.ok) {
       return await response.json();
     }
   } catch (error) {
-    console.error('Failed to fetch CM4 metrics:', error);
+    console.error(`Failed to fetch host metrics from ${url}:`, error);
   }
   return null;
 }

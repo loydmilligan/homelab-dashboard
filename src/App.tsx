@@ -2,10 +2,13 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout, WallboardLayout } from './components/Layout';
 import { Overview } from './pages/Overview';
 import { Hosts } from './pages/Hosts';
-import { Services } from './pages/Services';
-import { Network } from './pages/Network';
-import { IoT } from './pages/IoT';
-import { Logs } from './pages/Logs';
+import { Wapps } from './pages/Wapps';
+import { Works } from './pages/Works';
+import { Yots } from './pages/Yots';
+import { Stows } from './pages/Stows';
+import { Shots } from './pages/Shots';
+import { Tracs } from './pages/Tracs';
+import { Crets } from './pages/Crets';
 import { Settings } from './pages/Settings';
 import { Wallboard } from './pages/Wallboard';
 
@@ -17,10 +20,13 @@ function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Overview />} />
           <Route path="/hosts" element={<Hosts />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/network" element={<Network />} />
-          <Route path="/iot" element={<IoT />} />
-          <Route path="/logs" element={<Logs />} />
+          <Route path="/wapps" element={<Wapps />} />
+          <Route path="/works" element={<Works />} />
+          <Route path="/yots" element={<Yots />} />
+          <Route path="/stows" element={<Stows />} />
+          <Route path="/shots" element={<Shots />} />
+          <Route path="/tracs" element={<Tracs />} />
+          <Route path="/crets" element={<Crets />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
 

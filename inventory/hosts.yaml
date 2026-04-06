@@ -3,7 +3,7 @@
 
 hosts:
   - id: cm4
-    name: CM4
+    name: piUSBcam
     role: core-infra
     status: online
     address:
@@ -20,7 +20,6 @@ hosts:
       ram_pct: 64
       disk_pct: 41
       uptime_s: 123456
-
   - id: laptop
     name: Main Laptop
     role: compute-apps

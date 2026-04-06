@@ -1,0 +1,15 @@
+[Unit]
+Description=Shost Shots Runner
+After=network.target
+
+[Service]
+Type=simple
+User=mmariani
+WorkingDirectory=/home/mmariani/Projects/homelab-dashboard/host-runner
+EnvironmentFile=/home/mmariani/.config/shost/shots-runner.env
+ExecStart=/usr/bin/python3 /home/mmariani/Projects/homelab-dashboard/host-runner/shots_runner.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -55,7 +55,7 @@ export async function getContainerStats(containerId: string): Promise<{
       cpu: Math.round(cpuPercent * 100) / 100,
       memory: Math.round(memPercent * 100) / 100,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

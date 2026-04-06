@@ -1,11 +1,16 @@
-# Homelab Dashboard Roadmap
+# Shost — Roadmap
 
-**Document Version:** 1.1.0
-**Last Updated:** 2026-04-04
+**Document Version:** 2.1.0
+**Last Updated:** 2026-04-05
+
+> See `PHASE-PLANS.md` for detailed implementation plans with branch workflow.
+
+---
 
 ## MVP (Complete)
 - [x] Hosts page with live metrics (CPU, RAM, Disk, Temp, Uptime)
 - [x] CM4 exporter agent
+- [x] Laptop exporter agent in main compose stack
 - [x] Basic navigation and layout
 - [x] Settings page with theme toggle
 - [x] Cloudflare tunnel access
@@ -13,19 +18,32 @@
 - [x] Exporter version tooltip on hosts
 - [x] Docker Compose production deployment
 
-## Known Issues
-- [ ] **CM4 CPU showing 0%** - Parser needs fix in exporter
+---
+
+## Phase 0: Bug Fixes & Prep
+
+### Known Issues
+- [x] **CM4 CPU showing 0%** - Exporter CPU sampling corrected
+
+### Navigation Prep
+- [ ] Add Stows page placeholder (storage management)
+- [ ] Add Shots page placeholder (backups - separate agent)
+
+---
 
 ## Phase 1: Core Screens
 
 ### Hosts Enhancements
-- [ ] Detail modal for hosts with editing capability
-- [ ] Tags field for hosts (filtering, notifications routing)
-- [ ] RAM drilldown - top processes using memory
-- [ ] CPU drilldown - top processes using CPU
-- [ ] Disk drilldown - cache clearing suggestions, available space details
+- [x] Detail modal for hosts with editing capability
+- [x] Tags field for hosts (filtering, notifications routing)
+- [x] RAM drilldown - top processes using memory
+- [x] CPU drilldown - top processes using CPU
+- [x] Disk drilldown - per-mount breakdown and live usage details
+- [x] Exporter-backed host metrics for both laptop and CM4
+- [ ] External laptop thermal probe ingestion and calibration
+- [ ] Host warning thresholds for laptop heat and resource pressure
 
-### Services Page
+### Wapps (Services)
 - [ ] Live container status from Docker
 - [ ] Service health checks (HTTP)
 - [ ] Service grouping by host and category
@@ -33,40 +51,48 @@
 - [ ] Container restart/stop actions
 - [ ] Tags field for services (categories, filtering)
 
-### Network Page
+### Works (Network & Access)
 - [ ] Router status and metrics
 - [ ] Switch port status
 - [ ] Cloudflare Tunnel status
 - [ ] Tailscale device list
 - [ ] DNS resolution checks
 
-### IoT Page
+### Yots (IoT)
 - [ ] Zigbee2MQTT device list
 - [ ] Device last-seen status
 - [ ] Battery levels for sensors
 - [ ] MQTT broker status
 - [ ] Device count by area/room
 
-### Logs Page
+### Tracs (Logs & Traces)
 - [ ] Container log streaming
 - [ ] Log filtering by service
 - [ ] Log level filtering (error, warn, info)
 - [ ] Time range selection
 - [ ] Search functionality
 
-### Disks Page (NEW)
+### Stows (Storage)
 - [ ] Detailed drive info by host
 - [ ] Disk usage breakdown
 - [ ] Cache analysis and cleanup recommendations
 - [ ] Network shares section
-- [ ] Backup status integration
 - [ ] AI-assisted drive cleanup suggestions
 
-### Secrets Page (NEW)
+### Shots (Backups)
+> See `shots/` directory and `SHOTS_RUNNER_PLAN.md`.
+- [x] Backup jobs UI and runtime store
+- [x] Manual runs, retention, and notifications
+- [ ] Host-side `shots-runner` integration
+- [ ] Per-host backup targets including CM4
+
+### Crets (Secrets)
 - [ ] Secrets management interface
 - [ ] Secure storage integration
 - [ ] Secret rotation tracking
 - [ ] Access audit logging
+
+---
 
 ## Phase 2: Integrations
 
@@ -103,6 +129,8 @@
 - [ ] Publish test messages
 - [ ] Subscription management
 
+---
+
 ## Phase 3: Enhanced Dashboard
 
 ### Dashboard Widgets
@@ -126,14 +154,9 @@
 - [ ] Escalation policies
 - [ ] Integration with ntfy
 
-## Phase 4: Advanced Features
+---
 
-### Backup Monitoring
-- [ ] Backup job status
-- [ ] Last success/failure times
-- [ ] Storage usage tracking
-- [ ] Retention policy display
-- [ ] Manual backup triggers
+## Phase 4: Advanced Features
 
 ### Flow Diagram
 - [ ] Visual topology view
@@ -148,6 +171,8 @@
 - [ ] Cross-host metrics
 - [ ] Unified container view
 
+---
+
 ## Technical Debt
 - [ ] Production build optimization
 - [ ] Authentication/authorization
@@ -156,3 +181,13 @@
 - [ ] Unit tests
 - [ ] E2E tests
 - [ ] Performance monitoring
+
+---
+
+## Navigation Structure
+
+```
+Overview | Hosts | Wapps | Works | Yots | Stows | Shots | Tracs | Crets | Settings
+                                      ↑       ↑       ↑       ↑
+                                   Services  Network  IoT   Logs/Secrets
+```
