@@ -151,6 +151,7 @@ function SectionHeader({ title, count }: { title: string; count: number }) {
 
 export function Yots() {
   const { state, loading, error } = useStatePolling();
+  const [referenceNow] = useState(() => Date.now());
   const [groupBy, setGroupBy] = useState<GroupBy>('area');
   const [showLowBatteryOnly, setShowLowBatteryOnly] = useState(false);
   const hubs = state?.iot_hubs ?? EMPTY_HUBS;
@@ -216,16 +217,15 @@ export function Yots() {
   }, [devices]);
 
   const staleCount = useMemo(() => {
-    const now = Date.now();
     const staleMs = 6 * 60 * 60 * 1000;
 
     return devices.filter((device) => {
       if (!device.last_seen) {
         return true;
       }
-      return now - new Date(device.last_seen).getTime() > staleMs;
+      return referenceNow - new Date(device.last_seen).getTime() > staleMs;
     }).length;
-  }, [devices]);
+  }, [devices, referenceNow]);
 
   const devicesByType = useMemo(() => {
     const counts = new Map<string, number>();

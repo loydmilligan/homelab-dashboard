@@ -127,7 +127,7 @@ export function Crets() {
   const [filter, setFilter] = useState<'all' | 'due' | 'overdue' | 'missing'>('all');
   const [scopeFilter, setScopeFilter] = useState<'all' | 'laptop' | 'cm4'>('all');
 
-  const secrets = state?.secrets ?? [];
+  const secrets = useMemo(() => state?.secrets ?? [], [state?.secrets]);
 
   const filteredSecrets = useMemo(() => {
     return secrets.filter((secret) => {

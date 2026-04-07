@@ -28,9 +28,6 @@ __pycache__/
 *.pyc
 .venv/
 
-# Trash
-TRASH/
-
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

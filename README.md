@@ -2,7 +2,8 @@
 
 A castable, at-a-glance homelab dashboard built to support a hardware downsizing migration from a larger Proxmox plus multi-Pi setup to a simpler CM4 plus laptop setup.
 
-**Document Version:** 2.0.0
+**Document Version:** 2.1.0
+**Last Updated:** 2026-04-06
 
 ## Features
 
@@ -48,11 +49,15 @@ Open http://localhost:3088
 | Document | Description |
 |----------|-------------|
 | [QUICKSTART.md](docs/QUICKSTART.md) | Getting started guide |
-| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deployment processes |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design |
-| [ROADMAP.md](docs/ROADMAP.md) | Feature planning |
-| [SHOTS_RUNNER_PLAN.md](docs/SHOTS_RUNNER_PLAN.md) | Host-side backup runner plan |
 | [CHANGELOG.md](docs/CHANGELOG.md) | Version history |
+| [deployment.md](workflows/deployment.md) | Deployment workflow |
+| [documentation-management.md](workflows/documentation-management.md) | Documentation workflow |
+| [versioning-and-changelog.md](workflows/versioning-and-changelog.md) | Versioning and changelog workflow |
+| [testing-and-verification.md](workflows/testing-and-verification.md) | Verification workflow |
+| [repo-hygiene.md](workflows/repo-hygiene.md) | Active vs archive vs trash rules |
+| [process-review.md](workflows/process-review.md) | Process review loop and issue queue |
+| [docs/prio/README.md](docs/prio/README.md) | Prioritization and planning documents |
 | [CLAUDE.md](CLAUDE.md) | AI coding instructions |
 
 ## Architecture
@@ -100,6 +105,13 @@ Shost uses branded IA names in the UI while keeping technical internals descript
 ## External Access
 
 Dashboard accessible via Cloudflare tunnel at `shost.mattmariani.com`
+
+## Repo Hygiene
+
+- Active operational workflows live in `workflows/`
+- Prioritization and roadmap material lives in `docs/prio/`
+- Historical but retained material lives in `ARCHIVE/`
+- Files pending deletion or intentionally removed from the active surface live in `TRASH/`
 
 ## License
 

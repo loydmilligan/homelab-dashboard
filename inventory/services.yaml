@@ -2,12 +2,10 @@
 # Edit this file to add/modify services
 
 services:
-  # CM4 Services (Core Infrastructure)
   - id: homeassistant
     name: Home Assistant
     host_id: cm4
     category: automation
-    status: online
     url: http://192.168.6.38:8123
     check_type: http
     check_target: http://192.168.6.38:8123
@@ -17,111 +15,85 @@ services:
     exposes:
       - ha.mattmariani.com
     backup_policy: daily-config
-
   - id: zigbee2mqtt
     name: Zigbee2MQTT
     host_id: cm4
     category: iot
-    status: online
-    url: http://192.168.6.38:8080
+    url: https://zigbee.mattmariani.com
     check_type: http
-    check_target: http://192.168.6.38:8080
-    depends_on:
-      - mosquitto
-    backup_policy: weekly-config
-
+    check_target: http://192.168.6.38:8085
   - id: mosquitto
     name: Mosquitto
     host_id: cm4
     category: messaging
-    status: online
     check_type: tcp
     check_target: 192.168.6.38:1883
     backup_policy: weekly-config
-
   - id: vaultwarden
     name: Vaultwarden
     host_id: cm4
     category: security
-    status: online
     url: http://192.168.6.38:8222
     check_type: tcp
-    check_target: 192.168.6.38:8222
+    check_target: 192.168.6.38:8080
     exposes:
       - vault.mattmariani.com
-    backup_policy: daily-full
-
   - id: ntfy
     name: ntfy
     host_id: cm4
     category: notifications
-    status: online
-    url: http://192.168.6.38:8090
+    url: https://ntfy.mattmariani.com
     check_type: tcp
-    check_target: 192.168.6.38:8090
-    backup_policy: none
-
+    check_target: 192.168.6.38:89
+    exposes:
+      - ntfy.mattmariani.com
   - id: twofauth
     name: 2FAuth
     host_id: cm4
     category: security
-    status: online
     url: http://192.168.6.38:8000
     check_type: http
     check_target: http://192.168.6.38:8000
     exposes:
       - 2fauth.mattmariani.com
-
   - id: ssh-cm4
     name: SSH
     host_id: cm4
     category: access
-    status: online
     check_type: tcp
     check_target: 192.168.6.38:22
-
-  # Laptop Services (Compute/Apps)
   - id: n8n
     name: n8n
     host_id: laptop
     category: automation
-    status: online
     url: http://localhost:5678
     check_type: docker
     container_name: n8n
     backup_policy: weekly-config
-
   - id: mqtt-explorer
     name: MQTT Explorer
     host_id: laptop
     category: observability
-    status: online
     url: http://localhost:4000
     check_type: docker
     container_name: mqtt-explorer
-
   - id: karakeep
     name: Karakeep
     host_id: laptop
     category: apps
-    status: online
     check_type: docker
     container_name: karakeep
-
   - id: dumbpad
     name: DumbPad
     host_id: laptop
     category: apps
-    status: online
     url: http://localhost:3003
     check_type: docker
     container_name: dumbpad
-
   - id: whopicked
     name: WhoPicked
     host_id: laptop
     category: apps
-    status: online
     url: http://localhost:4287
     check_type: docker
     container_name: whopicked

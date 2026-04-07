@@ -1,0 +1,6 @@
+# Redacted
+
+This file previously contained live notification credentials.
+
+It was moved out of the active docs surface during repo cleanup.
+Do not store live secrets in this repo.

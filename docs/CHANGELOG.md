@@ -1,8 +1,34 @@
 # Changelog
 
-**Document Version:** 1.0.0
+**Document Version:** 1.2.0
+**Last Updated:** 2026-04-06
 
 All notable changes to this project will be documented in this file.
+
+## [Unreleased]
+
+### Added
+- Wapps CRUD support for service inventory changes
+- Service down and recovery notifications
+- Home Assistant, secrets, and MQTT thermal collectors
+- Shots runtime store, scheduler, runs, retention, and notifications
+- Shots page with backup job management UI
+- Workflow docs for deployment, documentation management, testing, repo hygiene, and process review
+- Process issue log and `/add_process_issue` command support for Claude
+
+### Changed
+- Moved roadmap and other planning material into `docs/prio/`
+- Moved superseded design material into `ARCHIVE/`
+- Moved dead legacy pages and other inactive files into `TRASH/`
+- Clarified repo rules for active, archived, and trash surfaces in `README.md`, `CLAUDE.md`, and `agents.md`
+- Updated host inventory naming toward `CM4`
+- Cleaned up service inventory checks and removed runtime-only status fields from persisted inventory
+
+### Fixed
+- CM4 CPU sampling for exporter-backed metrics
+- Thermal reader service to use the venv Python path
+- Paho MQTT callback API compatibility
+- Non-executable file permission normalization across the repo
 
 ## [0.1.0] - 2026-04-04
 

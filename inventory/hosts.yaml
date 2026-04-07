@@ -3,7 +3,7 @@
 
 hosts:
   - id: cm4
-    name: piUSBcam
+    name: CM4
     role: core-infra
     status: online
     address:

@@ -1,7 +1,7 @@
 # Shost — Multi-Agent Coding Instructions
 
-**Document Version:** 2.0.0
-**Last Updated:** 2026-04-04
+**Document Version:** 2.1.0
+**Last Updated:** 2026-04-06
 
 > This document is for non-Claude AI coding agents.
 > It must stay aligned with `CLAUDE.md`.
@@ -132,37 +132,27 @@ When cleaning up:
 - distinguish clearly between live telemetry, inventory-backed data, and mock data
 - prefer one clear path per concept instead of parallel experiments left in-tree
 
+### Repo Surface Rules
+
+- active operational workflows live in `workflows/`
+- prioritization and roadmap material lives in `docs/prio/`
+- retained historical material lives in `ARCHIVE/`
+- removed or pending-deletion material lives in `TRASH/`
+
+Use this rule to decide whether a process gets its own file:
+- if the process is recurring, cross-file, or requires verification/ownership/hand-off steps, give it a dedicated file in `workflows/`
+- if the guidance is short repo policy or agent behavior, keep it in `agents.md` and `CLAUDE.md`
+
+Do not treat `docs/prio/` items as the active execution source of truth without first confirming they are still current.
+
+When a cleanup move is made:
+- update references in README and control docs
+- leave a short explanation in the destination area if the move would otherwise be confusing
+- prefer moving inactive material into `ARCHIVE/` or `TRASH/` instead of leaving ambiguous duplicates in active folders
+
 ## Deployment Processes
 
-### Main Dashboard Deployment
-
-Use when changing `src/`, `server/`, `inventory/`, or app configuration.
-
-```bash
-cd ~/Projects/homelab-dashboard
-npm run build
-docker compose up -d --build
-docker compose restart frontend
-```
-
-Post-deploy checks:
-- verify footer build number
-- verify `/api/health`
-- verify key pages load
-
-### Host Exporter Deployment
-
-Use when changing `agent/`.
-
-```bash
-EXPORTER_VERSION=$(git rev-parse --short HEAD)
-scp -r agent/ mmariani@192.168.6.38:~/cm4-exporter/
-ssh mmariani@192.168.6.38 "cd ~/cm4-exporter/agent && EXPORTER_VERSION=$EXPORTER_VERSION docker compose up -d --build"
-```
-
-Post-deploy checks:
-- verify exporter health on `:9100`
-- verify CM4 metrics appear in the dashboard
+See [workflows/deployment.md](/home/loydmilligan/Projects/homelab-dashboard/workflows/deployment.md).
 
 ## Versioning
 
@@ -173,12 +163,22 @@ Post-deploy checks:
 
 ### Document Version
 - format: `MAJOR.MINOR.PATCH`
-- update when document guidance changes materially
+- use `PATCH` for minor doc/process clarifications
+- use `MINOR` for meaningful process or policy changes
+- use `MAJOR` only when the document's governance or intent changes substantially
+- update `Last Updated` when a process-bearing document changes materially
+- follow `workflows/versioning-and-changelog.md` for repo-wide rules
 
 ### Exporter Version
 - format: `<git-short-hash>`
 - passed via `EXPORTER_VERSION`
 - displayed in host tooltip
+
+### Repo Changelog
+- `docs/CHANGELOG.md` must keep an `Unreleased` section for working tree and not-yet-committed changes
+- dated release sections are only for committed repo states
+- do not present an uncommitted cleanup or doc pass as a released version
+- when a change materially affects product behavior, repo workflows, or active repo structure, decide whether it belongs in the changelog before closing the task
 
 ## Commit and Review Guidance
 
@@ -204,8 +204,27 @@ Post-deploy checks:
 1. Reconcile docs with implementation
 2. Normalize route and page naming
 3. Remove stale files and placeholders that are no longer canonical
-4. Verify build, lint, and smoke checks
-5. Commit a known-good baseline
+4. Run the verification workflow in `workflows/testing-and-verification.md`
+5. Update document versions and `docs/CHANGELOG.md` using `workflows/versioning-and-changelog.md`
+6. Commit a known-good baseline
+
+### Update Documentation
+1. Update the active doc content
+2. Update `Document Version` and `Last Updated` using `workflows/versioning-and-changelog.md`
+3. Update `README.md`, `agents.md`, and `CLAUDE.md` if document locations or operating rules changed
+4. Move superseded material to `ARCHIVE/` or `TRASH/` instead of leaving duplicate active copies
+
+### Update Changelog
+1. Add in-progress changes to `docs/CHANGELOG.md` under `Unreleased`
+2. Only create or extend a dated release section for a committed repo state
+3. Keep changelog scope to user-visible behavior, important fixes, workflow changes, and meaningful repo-structure changes
+4. Verify changelog claims match what is actually committed
+
+### Process Review
+1. Capture process friction with `/add_process_issue`
+2. Review the queue in `workflows/process-issue-log.md`
+3. Run the review loop in `workflows/process-review.md`
+4. Update `agents.md`, `CLAUDE.md`, and any affected workflow files together
 
 ## SSH Access
 
@@ -224,6 +243,9 @@ Post-deploy checks:
 
 After meaningful changes:
 - [ ] `agents.md` and `CLAUDE.md` still match in intent and workflow
+- [ ] the relevant workflow docs in `workflows/` still match how the repo is actually being operated
+- [ ] document versions and `Last Updated` values were adjusted where required
+- [ ] `docs/CHANGELOG.md` uses `Unreleased` for uncommitted work and does not claim a release that has not been committed
 - [ ] `npm run build` passes
 - [ ] `npm run lint` passes if the changed area is covered
 - [ ] `/api/health` responds
