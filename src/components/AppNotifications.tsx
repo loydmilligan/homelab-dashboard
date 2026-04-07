@@ -91,7 +91,7 @@ export function AppNotifications() {
       </div>
 
       {open ? (
-        <div className="absolute right-0 mt-2 w-[26rem] rounded-xl border border-gray-800 bg-gray-950/95 p-3 shadow-2xl">
+        <div className="absolute right-0 z-30 mt-2 w-[min(26rem,calc(100vw-2rem))] rounded-xl border border-gray-800 bg-gray-950/95 p-3 shadow-2xl">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-sm font-medium text-gray-100">App Notifications</div>
             <button
@@ -104,7 +104,7 @@ export function AppNotifications() {
               Mark all read
             </button>
           </div>
-          <div className="space-y-2">
+          <div className="max-h-[60vh] space-y-2 overflow-y-auto">
             {events.length === 0 ? (
               <div className="text-sm text-gray-500">No unread notifications.</div>
             ) : (

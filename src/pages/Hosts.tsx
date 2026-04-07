@@ -5,6 +5,7 @@ import { StatusChip } from '../components/StatusChip';
 import { HostDetailModal } from '../components/HostDetailModal';
 import { PageHero } from '../components/PageHero';
 import type { Host } from '../types/inventory';
+import { getHostHealthSignals } from '../lib/host-health';
 
 const EMPTY_HOSTS: Host[] = [];
 
@@ -52,6 +53,13 @@ function MetricBar({ label, value, warn = 80, critical = 90 }: {
   );
 }
 
+function statusTextClass(status: Host['status']) {
+  if (status === 'online') return 'text-green-400';
+  if (status === 'degraded') return 'text-amber-400';
+  if (status === 'offline') return 'text-red-400';
+  return 'text-gray-500';
+}
+
 function InfoTooltip({ info }: { info: { version: string; container: string } }) {
   return (
     <div className="group relative inline-block ml-2">
@@ -65,6 +73,9 @@ function InfoTooltip({ info }: { info: { version: string; container: string } })
 }
 
 function HostCard({ host, onClick }: { host: Host; onClick: () => void }) {
+  const health = getHostHealthSignals(host);
+  const tempValue = health.temp.value != null ? `${Math.round(health.temp.value)}°C` : 'N/A';
+
   return (
     <Card className="cursor-pointer hover:border-gray-600 transition-colors">
       <div onClick={onClick}>
@@ -81,7 +92,7 @@ function HostCard({ host, onClick }: { host: Host; onClick: () => void }) {
           <StatusChip status={host.status} />
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="mb-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div>
             <div className="text-xs text-gray-500">IP</div>
             <div className="text-sm text-gray-300 font-mono">{host.address?.ip ?? 'N/A'}</div>
@@ -92,14 +103,29 @@ function HostCard({ host, onClick }: { host: Host; onClick: () => void }) {
           </div>
           <div>
             <div className="text-xs text-gray-500">Temp</div>
-            <div className="text-sm text-gray-300">{formatHostTemperature(host)}</div>
+            <div className={`text-sm ${statusTextClass(health.temp.status)}`}>{formatHostTemperature(host)}</div>
           </div>
         </div>
 
         <div className="space-y-3">
-          <MetricBar label="CPU" value={host.metrics?.cpu_pct} />
-          <MetricBar label="RAM" value={host.metrics?.ram_pct} />
-          <MetricBar label="Disk" value={host.metrics?.disk_pct} />
+          <MetricBar label="CPU" value={host.metrics?.cpu_pct} warn={health.cpu.thresholds.warn} critical={health.cpu.thresholds.critical} />
+          <MetricBar label="RAM" value={host.metrics?.ram_pct} warn={health.ram.thresholds.warn} critical={health.ram.thresholds.critical} />
+          <MetricBar label="Disk" value={host.metrics?.disk_pct} warn={health.disk.thresholds.warn} critical={health.disk.thresholds.critical} />
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          <span className={`rounded-full border px-2 py-0.5 text-xs ${health.cpu.status === 'degraded' || health.cpu.status === 'offline' ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-gray-700 bg-gray-800 text-gray-400'}`}>
+            CPU {health.cpu.status}
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 text-xs ${health.ram.status === 'degraded' || health.ram.status === 'offline' ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-gray-700 bg-gray-800 text-gray-400'}`}>
+            RAM {health.ram.status}
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 text-xs ${health.disk.status === 'degraded' || health.disk.status === 'offline' ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-gray-700 bg-gray-800 text-gray-400'}`}>
+            Disk {health.disk.status}
+          </span>
+          <span className={`rounded-full border px-2 py-0.5 text-xs ${health.temp.status === 'degraded' || health.temp.status === 'offline' ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-gray-700 bg-gray-800 text-gray-400'}`}>
+            Temp {tempValue}
+          </span>
         </div>
 
         {host.tags && host.tags.length > 0 && (
@@ -241,7 +267,7 @@ export function Hosts() {
         />
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {filteredHosts.map((host) => (
           <HostCard
             key={host.id}

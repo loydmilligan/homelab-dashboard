@@ -11,12 +11,29 @@ interface LogLine {
   level: LogLevel;
   message: string;
   raw: string;
+  serviceId: string;
+  serviceName: string;
+  hostId: string;
+  hostName: string;
 }
 
-function parseLogLine(line: string): LogLine {
+interface AggregatedLogsResponse {
+  entries: Array<{
+    service_id: string;
+    service_name: string;
+    host_id: string;
+    host_name: string;
+    line: string;
+    timestamp: string;
+  }>;
+  failures?: string[];
+}
+
+function parseLogLine(entry: AggregatedLogsResponse['entries'][number]): LogLine {
+  const line = entry.line;
   // Try to parse timestamp from start of line
   const timestampMatch = line.match(/^(\d{4}-\d{2}-\d{2}T[\d:.]+Z?)\s*/);
-  const timestamp = timestampMatch?.[1] || '';
+  const timestamp = entry.timestamp || timestampMatch?.[1] || '';
   const rest = timestampMatch ? line.slice(timestampMatch[0].length) : line;
 
   // Detect log level
@@ -30,7 +47,16 @@ function parseLogLine(line: string): LogLine {
     level = 'debug';
   }
 
-  return { timestamp, level, message: rest, raw: line };
+  return {
+    timestamp,
+    level,
+    message: rest,
+    raw: line,
+    serviceId: entry.service_id,
+    serviceName: entry.service_name,
+    hostId: entry.host_id,
+    hostName: entry.host_name,
+  };
 }
 
 function LogLine({ log, searchTerm }: { log: LogLine; searchTerm: string }) {
@@ -60,6 +86,9 @@ function LogLine({ log, searchTerm }: { log: LogLine; searchTerm: string }) {
 
   return (
     <div className={`font-mono text-xs py-0.5 ${levelColors[log.level]}`}>
+      <span className="mr-2 inline-block rounded bg-gray-800 px-1.5 py-0.5 text-[10px] text-cyan-200">
+        {log.hostName} / {log.serviceName}
+      </span>
       {log.timestamp && (
         <span className="text-gray-600 mr-2">
           {new Date(log.timestamp).toLocaleTimeString()}
@@ -72,54 +101,58 @@ function LogLine({ log, searchTerm }: { log: LogLine; searchTerm: string }) {
 
 export function Tracs() {
   const { state, loading: stateLoading } = useStatePolling();
-  const [selectedService, setSelectedService] = useState<string>('');
-  const [logs, setLogs] = useState<string>('');
+  const [selectedService, setSelectedService] = useState<string>('all');
+  const [selectedHost, setSelectedHost] = useState<string>('all');
+  const [logs, setLogs] = useState<LogLine[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [levelFilter, setLevelFilter] = useState<LogLevel>('all');
   const [tailLines, setTailLines] = useState<TimeRange>('100');
   const [searchTerm, setSearchTerm] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const logContainerRef = useRef<HTMLDivElement>(null);
 
-  // Get services with containers
+  const hosts = useMemo(() => state?.hosts ?? [], [state?.hosts]);
+
   const services = useMemo(() => {
     if (!state?.services) return [];
     return state.services.filter((s) => s.container_name);
   }, [state?.services]);
 
-  // Auto-select first service
   useEffect(() => {
-    if (services.length > 0 && !selectedService) {
-      setSelectedService(services[0].id);
-    }
-  }, [services, selectedService]);
-
-  // Fetch logs when service or tail changes
-  useEffect(() => {
-    if (!selectedService) return;
-
     const fetchLogs = async () => {
       setLoading(true);
       setError(null);
+      setWarning(null);
       try {
-        const response = await fetch(
-          `/api/services/${encodeURIComponent(selectedService)}/logs?tail=${tailLines}`
-        );
+        const params = new URLSearchParams({ tail: tailLines });
+        if (selectedService && selectedService !== 'all') {
+          params.set('service_id', selectedService);
+        }
+        if (selectedHost && selectedHost !== 'all') {
+          params.set('host_id', selectedHost);
+        }
+
+        const response = await fetch(`/api/logs?${params.toString()}`);
         if (!response.ok) {
           throw new Error('Failed to fetch logs');
         }
-        const data = await response.json();
-        setLogs(data.logs || '');
+        const data = (await response.json()) as AggregatedLogsResponse;
+        setLogs(data.entries.map(parseLogLine));
+        if (data.failures && data.failures.length > 0) {
+          setWarning(`Some logs could not be fetched: ${data.failures.join(' | ')}`);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
+        setLogs([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLogs();
-  }, [selectedService, tailLines]);
+    void fetchLogs();
+  }, [selectedService, selectedHost, tailLines]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -130,14 +163,12 @@ export function Tracs() {
 
   // Parse and filter logs
   const parsedLogs = useMemo(() => {
-    if (!logs) return [];
-    return logs
-      .split('\n')
-      .filter((line) => line.trim())
-      .map(parseLogLine)
-      .filter((log) => {
+    return logs.filter((log) => {
         // Level filter
         if (levelFilter !== 'all' && log.level !== levelFilter) {
+          return false;
+        }
+        if (selectedHost !== 'all' && log.hostId !== selectedHost) {
           return false;
         }
         // Search filter
@@ -146,18 +177,26 @@ export function Tracs() {
         }
         return true;
       });
-  }, [logs, levelFilter, searchTerm]);
+  }, [logs, levelFilter, searchTerm, selectedHost]);
 
   const handleRefresh = async () => {
-    if (!selectedService) return;
     setLoading(true);
+    setWarning(null);
     try {
-      const response = await fetch(
-        `/api/services/${encodeURIComponent(selectedService)}/logs?tail=${tailLines}`
-      );
+      const params = new URLSearchParams({ tail: tailLines });
+      if (selectedService && selectedService !== 'all') {
+        params.set('service_id', selectedService);
+      }
+      if (selectedHost && selectedHost !== 'all') {
+        params.set('host_id', selectedHost);
+      }
+      const response = await fetch(`/api/logs?${params.toString()}`);
       if (response.ok) {
-        const data = await response.json();
-        setLogs(data.logs || '');
+        const data = (await response.json()) as AggregatedLogsResponse;
+        setLogs(data.entries.map(parseLogLine));
+        if (data.failures && data.failures.length > 0) {
+          setWarning(`Some logs could not be fetched: ${data.failures.join(' | ')}`);
+        }
       }
     } finally {
       setLoading(false);
@@ -178,18 +217,31 @@ export function Tracs() {
         accentClassName="before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-gradient-to-b before:from-rose-400 before:to-orange-400"
       />
 
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="rounded-2xl border border-gray-800 bg-gray-900/40 p-4">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(13rem,1fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)_minmax(10rem,0.8fr)_minmax(14rem,1fr)_auto_auto]">
           {/* Service Selector */}
           <select
             value={selectedService}
             onChange={(e) => setSelectedService(e.target.value)}
-            className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 text-sm focus:outline-none focus:border-gray-600"
+            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-gray-600"
           >
-            <option value="">Select service...</option>
+            <option value="all">All Services</option>
             {services.map((service) => (
               <option key={service.id} value={service.id}>
                 {service.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={selectedHost}
+            onChange={(e) => setSelectedHost(e.target.value)}
+            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-gray-600"
+          >
+            <option value="all">All Hosts</option>
+            {hosts.map((host) => (
+              <option key={host.id} value={host.id}>
+                {host.name}
               </option>
             ))}
           </select>
@@ -198,7 +250,7 @@ export function Tracs() {
           <select
             value={levelFilter}
             onChange={(e) => setLevelFilter(e.target.value as LogLevel)}
-            className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 text-sm focus:outline-none focus:border-gray-600"
+            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-gray-600"
           >
             <option value="all">All Levels</option>
             <option value="error">Errors</option>
@@ -211,7 +263,7 @@ export function Tracs() {
           <select
             value={tailLines}
             onChange={(e) => setTailLines(e.target.value as TimeRange)}
-            className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 text-sm focus:outline-none focus:border-gray-600"
+            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-gray-600"
           >
             <option value="100">Last 100</option>
             <option value="500">Last 500</option>
@@ -225,13 +277,13 @@ export function Tracs() {
             placeholder="Search logs..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-200 text-sm focus:outline-none focus:border-gray-600 w-48"
+            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-gray-600"
           />
 
           {/* Auto-scroll toggle */}
           <button
             onClick={() => setAutoScroll(!autoScroll)}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+            className={`rounded-lg px-3 py-2 text-sm transition-colors ${
               autoScroll
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
@@ -244,7 +296,7 @@ export function Tracs() {
           <button
             onClick={handleRefresh}
             disabled={loading || !selectedService}
-            className="px-3 py-1.5 bg-gray-800 text-gray-200 rounded-lg text-sm hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            className="rounded-lg bg-gray-800 px-3 py-2 text-sm text-gray-200 transition-colors hover:bg-gray-700 disabled:opacity-50"
           >
             {loading ? 'Loading...' : 'Refresh'}
           </button>
@@ -252,10 +304,12 @@ export function Tracs() {
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center gap-4 text-sm text-gray-400">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400">
         <span>{parsedLogs.length} lines</span>
+        <span>{selectedService === 'all' ? 'all services' : services.find((service) => service.id === selectedService)?.name ?? selectedService}</span>
+        <span>{selectedHost === 'all' ? 'all hosts' : hosts.find((host) => host.id === selectedHost)?.name ?? selectedHost}</span>
         {searchTerm && <span>matching "{searchTerm}"</span>}
-        <span>•</span>
+        <span className="hidden sm:inline">•</span>
         <span className="text-red-400">
           {parsedLogs.filter((l) => l.level === 'error').length} errors
         </span>
@@ -264,18 +318,22 @@ export function Tracs() {
         </span>
       </div>
 
+      {warning ? (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          {warning}
+        </div>
+      ) : null}
+
       {/* Log Output */}
       <Card className="p-0 overflow-hidden">
         {error ? (
           <div className="p-4 text-red-400">{error}</div>
-        ) : !selectedService ? (
-          <div className="p-4 text-gray-500">Select a service to view logs</div>
-        ) : loading && !logs ? (
+        ) : loading && logs.length === 0 ? (
           <div className="p-4 text-gray-400">Loading logs...</div>
         ) : (
           <div
             ref={logContainerRef}
-            className="h-[600px] overflow-y-auto p-4 bg-gray-950"
+            className="h-[65vh] min-h-[24rem] overflow-y-auto bg-gray-950 p-3 sm:p-4"
           >
             {parsedLogs.length > 0 ? (
               parsedLogs.map((log, i) => (

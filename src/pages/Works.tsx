@@ -161,12 +161,12 @@ function RouteCard({
             key={`${path.id}-${service.id}`}
             className="rounded-lg border border-gray-800 bg-gray-950/50 px-4 py-3"
           >
-            <div className="flex items-center justify-between gap-3">
-              <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <div className="text-sm font-medium text-gray-100">{service.name}</div>
                 <div className="text-xs text-gray-500">{service.category}</div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <HostBadge host={hostsById.get(service.host_id)} />
                 <StatusChip status={service.status} size="sm" />
               </div>
@@ -305,7 +305,7 @@ export function Works() {
                 key={device.id}
                 className="rounded-lg border border-gray-800 bg-gray-950/50 px-4 py-3"
               >
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2">
                     <span>{deviceIcons[device.type] || '🖥️'}</span>
                     <div>
@@ -328,7 +328,7 @@ export function Works() {
       {network_devices.length > 0 && (
         <div>
           <SectionHeader title="Network Devices" count={network_devices.length} />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {network_devices.map((device) => (
               <NetworkDeviceCard key={device.id} device={device} />
             ))}
@@ -339,7 +339,7 @@ export function Works() {
       {access_paths.length > 0 && (
         <div>
           <SectionHeader title="Access Paths" count={access_paths.length} />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {access_paths.map((path) => (
               <AccessPathCard
                 key={path.id}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Host } from '../types/inventory';
+import { getHostHealthSignals } from '../lib/host-health';
 
 interface Props {
   host: Host;
@@ -57,6 +58,7 @@ function MetricBar({ label, value, warn = 80, critical = 90 }: {
 
 export function HostDetailModal({ host, onClose, onSave }: Props) {
   const metrics = host.metrics;
+  const health = getHostHealthSignals(host);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -198,7 +200,44 @@ export function HostDetailModal({ host, onClose, onSave }: Props) {
             </div>
             <div>
               <div className="text-xs text-gray-500 uppercase tracking-wide">Temperature</div>
-              <div className="text-sm text-gray-300">{formatTemperature(metrics?.surface_temp_c ?? metrics?.temp_c)}</div>
+              <div className={`text-sm ${
+                health.temp.status === 'offline' ? 'text-red-400' :
+                health.temp.status === 'degraded' ? 'text-amber-400' :
+                health.temp.status === 'online' ? 'text-green-400' : 'text-gray-300'
+              }`}>{formatTemperature(metrics?.surface_temp_c ?? metrics?.temp_c)}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="rounded-lg border border-gray-800 bg-gray-950/40 px-4 py-3">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Host Warning Thresholds</div>
+              <div className="mt-2 space-y-1 text-sm text-gray-300">
+                <div>{health.cpu.label}: {health.cpu.detail}</div>
+                <div>{health.ram.label}: {health.ram.detail}</div>
+                <div>{health.disk.label}: {health.disk.detail}</div>
+                <div>{health.temp.label}: {health.temp.detail}</div>
+              </div>
+            </div>
+            <div className="rounded-lg border border-gray-800 bg-gray-950/40 px-4 py-3">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Current Pressure Signals</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[health.cpu, health.ram, health.disk, health.temp].map((metric) => (
+                  <span
+                    key={metric.label}
+                    className={`rounded-full border px-2.5 py-1 text-xs ${
+                      metric.status === 'offline'
+                        ? 'border-red-500/30 bg-red-500/10 text-red-300'
+                        : metric.status === 'degraded'
+                          ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                          : metric.status === 'online'
+                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                            : 'border-gray-700 bg-gray-800 text-gray-400'
+                    }`}
+                  >
+                    {metric.label} {metric.status}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -250,16 +289,16 @@ export function HostDetailModal({ host, onClose, onSave }: Props) {
           <div>
             <div className="text-xs text-gray-500 uppercase tracking-wide mb-3">Resource Usage</div>
             <div className="space-y-4">
-              <MetricBar label="CPU" value={metrics?.cpu_pct} />
+              <MetricBar label="CPU" value={metrics?.cpu_pct} warn={health.cpu.thresholds.warn} critical={health.cpu.thresholds.critical} />
               <div>
-                <MetricBar label="RAM" value={metrics?.ram_pct} />
+                <MetricBar label="RAM" value={metrics?.ram_pct} warn={health.ram.thresholds.warn} critical={health.ram.thresholds.critical} />
                 {metrics?.ram_total_mb && (
                   <div className="text-xs text-gray-500 mt-1">
                     {metrics.ram_used_mb ?? 0} MB / {metrics.ram_total_mb} MB
                   </div>
                 )}
               </div>
-              <MetricBar label="Disk" value={metrics?.disk_pct} />
+              <MetricBar label="Disk" value={metrics?.disk_pct} warn={health.disk.thresholds.warn} critical={health.disk.thresholds.critical} />
             </div>
           </div>
 

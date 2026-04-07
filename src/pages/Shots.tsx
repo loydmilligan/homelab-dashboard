@@ -548,7 +548,7 @@ export function Shots() {
             </div>
           </div>
 
-          <div className="mt-6 flex items-center gap-3">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
             <button type="button" onClick={() => { void saveJob(); }} disabled={saving} className="rounded-md bg-fuchsia-600 px-4 py-2 text-sm text-white disabled:opacity-50">
               {saving ? 'Saving...' : form.id ? 'Save Changes' : 'Create Backup'}
             </button>
@@ -571,8 +571,8 @@ export function Shots() {
               <div className="space-y-3">
                 {jobs.map((job) => (
                   <div key={job.id} className="rounded-lg border border-gray-800 bg-gray-950/40 p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
                         <button
                           type="button"
                           onClick={() => {
@@ -587,7 +587,7 @@ export function Shots() {
                         <div className="text-sm text-gray-500">{job.source_path}</div>
                         <div className="text-sm text-gray-500">{job.destination_path}</div>
                       </div>
-                      <div className="text-right text-sm">
+                      <div className="text-sm sm:text-right">
                         <div className="text-gray-300">{formatRunStatus(job)}</div>
                         <div className="text-gray-500">{formatSchedule(job)}</div>
                         <div className="text-gray-600">Next: {formatTimestamp(job.next_run_at)}</div>
@@ -604,11 +604,11 @@ export function Shots() {
                       </div>
                     ) : null}
 
-                    <div className="mt-4 flex items-center justify-between gap-4 border-t border-gray-800 pt-3 text-sm">
+                    <div className="mt-4 flex flex-col gap-3 border-t border-gray-800 pt-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-gray-500">
                         Last run: {formatTimestamp(job.last_run?.completed_at ?? job.last_run?.started_at)}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={() => {
@@ -660,7 +660,7 @@ export function Shots() {
               <div className="space-y-3">
                 {selectedRuns.slice(0, 8).map((run) => (
                   <div key={run.id} className="rounded-lg border border-gray-800 bg-gray-950/40 p-3 text-sm">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-gray-200">{run.status}</div>
                       <div className="text-gray-500">{formatTimestamp(run.completed_at ?? run.started_at)}</div>
                     </div>

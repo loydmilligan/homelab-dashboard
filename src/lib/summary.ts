@@ -1,4 +1,5 @@
 import type { AccessPath, Backup, DashboardState, Host, SecretRecord, Service, Status } from '../types/inventory';
+import { isHostUnderPressure } from './host-health';
 
 export type SummaryProvenance = 'live' | 'inventory' | 'mixed' | 'inferred';
 
@@ -69,20 +70,6 @@ function countByStatus<T extends { status: Status }>(items: T[]) {
   };
 }
 
-function hostUnderPressure(host: Host) {
-  const metrics = host.metrics;
-  if (!metrics) {
-    return false;
-  }
-
-  return (
-    (metrics.cpu_pct ?? 0) >= 85 ||
-    (metrics.ram_pct ?? 0) >= 85 ||
-    (metrics.disk_pct ?? 0) >= 90 ||
-    (metrics.surface_temp_c ?? metrics.temp_c ?? 0) >= 75
-  );
-}
-
 function getBackupFreshness(backup: Backup, now: Date) {
   if (!backup.last_success) {
     return 'stale';
@@ -129,7 +116,7 @@ export function deriveDashboardSummary(state: DashboardState): DashboardSummary 
   const serviceCounts = countByStatus(state.services);
   const backupCounts = countByStatus(state.backups);
 
-  const hostPressure = state.hosts.filter(hostUnderPressure);
+  const hostPressure = state.hosts.filter(isHostUnderPressure);
   const degradedHosts = state.hosts.filter((host) => host.status !== 'online');
   const degradedServices = state.services.filter((service) => service.status !== 'online');
   const degradedAccessPaths = state.access_paths.filter((path) => path.status !== 'online');

@@ -117,7 +117,7 @@ export function Settings() {
           <h3 className="text-lg font-medium text-gray-100 mb-4">Notifications</h3>
           <div className="space-y-6">
             <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-4">
-              <div className="mb-3 flex items-center justify-between">
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-sm font-medium text-gray-100">Browser</div>
                   <div className="text-xs text-gray-500">This does not send anything externally. It controls the in-app Alerts feed plus browser push popups when permission is granted.</div>
@@ -134,8 +134,8 @@ export function Settings() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="space-y-3 rounded-lg border border-gray-800 bg-gray-950/40 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-sm font-medium text-gray-100">ntfy</div>
                   <div className="text-xs text-gray-500">App-wide push delivery for any feature that emits notification events.</div>
@@ -156,8 +156,8 @@ export function Settings() {
               <div className="text-xs text-gray-500">Use either a token or username/password credentials. The token is enough for your setup.</div>
             </div>
 
-            <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-4 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="space-y-3 rounded-lg border border-gray-800 bg-gray-950/40 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="text-sm font-medium text-gray-100">SMTP Email</div>
                   <div className="text-xs text-gray-500">Works for Gmail app-password SMTP or any other relay. For Gmail, use port 587 with TLS unchecked, or port 465 with TLS checked.</div>
@@ -173,7 +173,7 @@ export function Settings() {
                 />
               </div>
               <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder="SMTP host" value={notificationSettings.smtp.host ?? ''} onChange={(event) => setNotificationSettings((current) => current ? { ...current, smtp: { ...current.smtp, host: event.target.value } } : current)} />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <input
                   className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100"
                   placeholder="Port"
@@ -198,7 +198,7 @@ export function Settings() {
               <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder="To emails, comma-separated" value={notificationSettings.smtp.to_emails.join(', ')} onChange={(event) => setNotificationSettings((current) => current ? { ...current, smtp: { ...current.smtp, to_emails: event.target.value.split(',').map((value) => value.trim()).filter(Boolean) } } : current)} />
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <button onClick={() => { void saveNotifications(); }} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white">Save Notifications</button>
               <button onClick={() => { void sendTestNotification(); }} className="rounded-lg bg-gray-800 px-4 py-2 text-sm text-gray-200">Send Test</button>
               {saveMessage ? <span className="text-sm text-gray-400">{saveMessage}</span> : null}

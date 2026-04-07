@@ -106,16 +106,16 @@ function ServiceFormModal({ mode, initial, hosts, onSave, onClose }: ServiceForm
   const labelCls = 'block text-xs text-gray-400 mb-1';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-gray-900 border border-gray-700 rounded-lg w-full max-w-lg mx-4 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 p-4">
+      <div className="mx-4 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
           <h2 className="text-base font-semibold text-gray-100">
             {mode === 'add' ? 'Add Service' : `Edit: ${initial.name}`}
           </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-300 text-xl leading-none">×</button>
         </div>
-        <form onSubmit={handleSubmit} className="p-5 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit} className="space-y-3 p-5">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Name *</label>
               <input className={inputCls} value={form.name} onChange={handleNameChange} placeholder="My Service" />
@@ -131,7 +131,7 @@ function ServiceFormModal({ mode, initial, hosts, onSave, onClose }: ServiceForm
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Host *</label>
               <select className={inputCls} value={form.host_id} onChange={set('host_id')}>
@@ -147,7 +147,7 @@ function ServiceFormModal({ mode, initial, hosts, onSave, onClose }: ServiceForm
             <label className={labelCls}>URL</label>
             <input className={inputCls} value={form.url} onChange={set('url')} placeholder="http://localhost:8080" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Check Type</label>
               <select className={inputCls} value={form.check_type} onChange={set('check_type')}>
@@ -168,7 +168,7 @@ function ServiceFormModal({ mode, initial, hosts, onSave, onClose }: ServiceForm
               )}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className={labelCls}>Tags (comma-separated)</label>
               <input className={inputCls} value={form.tags} onChange={set('tags')} placeholder="tag1, tag2" />
@@ -179,7 +179,7 @@ function ServiceFormModal({ mode, initial, hosts, onSave, onClose }: ServiceForm
             </div>
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
             <button type="button" onClick={onClose} className="px-4 py-1.5 text-sm rounded bg-gray-800 text-gray-300 hover:bg-gray-700">
               Cancel
             </button>
@@ -213,9 +213,9 @@ function ServiceCard({ service, hostName, onRestart, onStop, onStart, onEdit, on
 
   return (
     <Card className="hover:border-gray-600 transition-colors">
-      <div className="flex items-start justify-between mb-2">
+      <div className="mb-2 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-medium text-gray-100 truncate">{service.name}</h3>
             <span className="text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-500 shrink-0">
               {service.category}
@@ -223,8 +223,8 @@ function ServiceCard({ service, hostName, onRestart, onStop, onStart, onEdit, on
           </div>
           <div className="text-sm text-gray-500">{hostName}</div>
         </div>
-        <div className="flex items-center gap-1 ml-2 shrink-0">
-          <StatusChip status={service.status} />
+        <div className="ml-2 flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center">
+          <StatusChip status={service.status} size="sm" />
           <button
             onClick={onEdit}
             title="Edit service"
@@ -297,7 +297,7 @@ function ServiceCard({ service, hostName, onRestart, onStop, onStart, onEdit, on
       )}
 
       {hasContainerControl && (
-        <div className="flex gap-2 mt-3 pt-3 border-t border-gray-800">
+        <div className="mt-3 flex flex-wrap gap-2 border-t border-gray-800 pt-3">
           {isRunning ? (
             <>
               <button onClick={onRestart} disabled={isLoading}
@@ -452,8 +452,8 @@ export function Wapps() {
         accentClassName="before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-gradient-to-b before:from-amber-400 before:to-sky-400"
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-4 flex-wrap">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-3">
           {allTags.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-gray-400">Filter:</span>
@@ -467,7 +467,7 @@ export function Wapps() {
               ))}
             </div>
           )}
-          <div className="flex items-center gap-2 bg-gray-800 rounded-lg p-1">
+          <div className="flex flex-wrap items-center gap-2 rounded-lg bg-gray-800 p-1">
             {(['host', 'category'] as GroupBy[]).map((g) => (
               <button key={g} onClick={() => setGroupBy(g)}
                 className={`px-3 py-1 text-sm rounded transition-colors ${
@@ -519,7 +519,7 @@ export function Wapps() {
       {Array.from(groupedServices.entries()).map(([groupName, services]) => (
         <div key={groupName}>
           <GroupHeader title={groupName} count={services.length} />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {services.map((service) => (
               <ServiceCard
                 key={service.id}

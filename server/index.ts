@@ -61,6 +61,72 @@ function decodeDockerLogBuffer(logs: Buffer) {
     .join('\n');
 }
 
+function parseTail(value: unknown) {
+  const tail = Number(value);
+  return Number.isFinite(tail) && tail > 0 ? tail : 100;
+}
+
+function parseLogTimestamp(line: string) {
+  const match = line.match(/^(\d{4}-\d{2}-\d{2}T[\d:.]+Z?)\s*/);
+  if (!match) {
+    return '';
+  }
+
+  const parsed = new Date(match[1]);
+  return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString();
+}
+
+interface AggregatedLogEntry {
+  service_id: string;
+  service_name: string;
+  host_id: string;
+  host_name: string;
+  line: string;
+  timestamp: string;
+}
+
+async function getServiceLogs(
+  service: Awaited<ReturnType<typeof collectState>>['services'][number],
+  tail: number,
+  remoteLogsByContainer?: Record<string, string>,
+) {
+  if (!service.container_name) {
+    throw new Error('Service does not expose container logs');
+  }
+
+  if (service.host_id === 'cm4') {
+    const logs = remoteLogsByContainer?.[service.container_name];
+    if (typeof logs !== 'string') {
+      throw new Error('Remote container logs not available');
+    }
+
+    return logs
+      .split('\n')
+      .filter(Boolean)
+      .slice(-tail)
+      .join('\n');
+  }
+
+  const containers = await docker.listContainers({ all: true });
+  const target = containers.find((container) =>
+    container.Names.some((name) => name.replace(/^\//, '') === service.container_name)
+  );
+
+  if (!target) {
+    throw new Error('Container not found');
+  }
+
+  const container = docker.getContainer(target.Id);
+  const logs = await container.logs({
+    stdout: true,
+    stderr: true,
+    tail,
+    timestamps: true,
+  });
+
+  return decodeDockerLogBuffer(logs);
+}
+
 // Container actions
 app.post('/api/containers/:name/restart', async (req, res) => {
   const { name } = req.params;
@@ -148,7 +214,7 @@ app.get('/api/containers/:name/logs', async (req, res) => {
 
 app.get('/api/services/:id/logs', async (req, res) => {
   const { id } = req.params;
-  const tail = parseInt(req.query.tail as string) || 100;
+  const tail = parseTail(req.query.tail);
 
   try {
     const state = await collectState();
@@ -162,43 +228,89 @@ app.get('/api/services/:id/logs', async (req, res) => {
       return res.status(409).json({ error: 'Service does not expose container logs' });
     }
 
+    let remoteLogsByContainer: Record<string, string> | undefined;
     if (service.host_id === 'cm4') {
       const remote = await fetchHostMetrics(CM4_EXPORTER_URL);
       if (!remote) {
         return res.status(502).json({ error: 'Failed to reach CM4 exporter' });
       }
-
-      const logs = remote.logs?.[service.container_name];
-      if (typeof logs !== 'string') {
-        return res.status(404).json({ error: 'Remote container logs not available' });
-      }
-
-      const logLines = logs.split('\n').filter(Boolean);
-      res.json({ logs: logLines.slice(-tail).join('\n') });
-      return;
+      remoteLogsByContainer = remote.logs;
     }
 
-    const containers = await docker.listContainers({ all: true });
-    const target = containers.find((container) =>
-      container.Names.some((name) => name.replace(/^\//, '') === service.container_name)
-    );
-
-    if (!target) {
-      return res.status(404).json({ error: 'Container not found' });
-    }
-
-    const container = docker.getContainer(target.Id);
-    const logs = await container.logs({
-      stdout: true,
-      stderr: true,
-      tail,
-      timestamps: true,
-    });
-
-    res.json({ logs: decodeDockerLogBuffer(logs) });
+    res.json({ logs: await getServiceLogs(service, tail, remoteLogsByContainer) });
   } catch (error) {
     console.error(`Error getting logs for service ${id}:`, error);
     res.status(500).json({ error: 'Failed to get service logs' });
+  }
+});
+
+app.get('/api/logs', async (req, res) => {
+  const tail = parseTail(req.query.tail);
+  const serviceId = typeof req.query.service_id === 'string' ? req.query.service_id : '';
+  const hostId = typeof req.query.host_id === 'string' ? req.query.host_id : '';
+
+  try {
+    const state = await collectState();
+    const hostNames = new Map(state.hosts.map((host) => [host.id, host.name]));
+
+    let services = state.services.filter((service) => service.container_name);
+
+    if (serviceId && serviceId !== 'all') {
+      services = services.filter((service) => service.id === serviceId);
+    }
+
+    if (hostId && hostId !== 'all') {
+      services = services.filter((service) => service.host_id === hostId);
+    }
+
+    let remoteLogsByContainer: Record<string, string> | undefined;
+    if (services.some((service) => service.host_id === 'cm4')) {
+      const remote = await fetchHostMetrics(CM4_EXPORTER_URL);
+      if (remote) {
+        remoteLogsByContainer = remote.logs;
+      }
+    }
+
+    const settled = await Promise.allSettled(
+      services.map(async (service) => {
+        const logs = await getServiceLogs(service, tail, remoteLogsByContainer);
+        const entries: AggregatedLogEntry[] = logs
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => ({
+            service_id: service.id,
+            service_name: service.name,
+            host_id: service.host_id,
+            host_name: hostNames.get(service.host_id) ?? service.host_id,
+            line,
+            timestamp: parseLogTimestamp(line),
+          }));
+
+        return entries;
+      }),
+    );
+
+    const entries = settled
+      .filter((result): result is PromiseFulfilledResult<AggregatedLogEntry[]> => result.status === 'fulfilled')
+      .flatMap((result) => result.value)
+      .sort((a, b) => {
+        if (!a.timestamp && !b.timestamp) return 0;
+        if (!a.timestamp) return 1;
+        if (!b.timestamp) return -1;
+        return a.timestamp.localeCompare(b.timestamp);
+      });
+
+    const failures = settled
+      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+      .map((result) => result.reason instanceof Error ? result.reason.message : 'Unknown log fetch failure');
+
+    res.json({
+      entries,
+      failures,
+    });
+  } catch (error) {
+    console.error('Error getting aggregated logs:', error);
+    res.status(500).json({ error: 'Failed to get aggregated logs' });
   }
 });
 
@@ -244,6 +356,7 @@ app.listen(PORT, () => {
   console.log(`  GET   /api/state - Full state with metrics`);
   console.log(`  GET   /api/health - Health check`);
   console.log(`  GET   /api/services/:id/logs - Get service logs (local or remote)`);
+  console.log(`  GET   /api/logs - Get aggregated logs feed`);
   console.log(`  PATCH /api/hosts/:id - Update host metadata`);
   console.log(`  POST  /api/containers/:name/restart - Restart container`);
   console.log(`  POST  /api/containers/:name/stop - Stop container`);
