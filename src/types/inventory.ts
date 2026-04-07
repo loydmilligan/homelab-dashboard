@@ -155,6 +155,21 @@ export interface Backup {
   next_scheduled?: string;
 }
 
+export interface NotificationChannelSummary {
+  channel: 'browser' | 'ntfy' | 'smtp';
+  enabled: boolean;
+  configured: boolean;
+  status: Status;
+}
+
+export interface NotificationSummary {
+  status: Status;
+  enabled_channels: number;
+  ready_channels: number;
+  misconfigured_channels: number;
+  channels: NotificationChannelSummary[];
+}
+
 export interface DiagramNode {
   id: string;
   kind: 'host' | 'service' | 'hub' | 'network' | 'access';
@@ -185,6 +200,7 @@ export interface DashboardState {
   checks: Check[];
   backups: Backup[];
   secrets: SecretRecord[];
+  notification_summary?: NotificationSummary;
   diagram?: Diagram;
   generated_at: string;
 }

@@ -12,8 +12,9 @@ import { collectHomeAssistantIot } from './home-assistant.js';
 import { getLaptopMqttThermalReading } from './mqtt-thermal.js';
 import { fetchHostMetrics } from './remote-host.js';
 import { collectSecretInventory } from './secrets.js';
-import type { DashboardState, Host, IoTHub, Service } from './types.js';
+import type { DashboardState, Host, IoTHub, NotificationSummary, Service } from './types.js';
 import { emitNotification } from '../notifications/service.js';
+import { getNotificationsStore } from '../notifications/store.js';
 import { getShotsStore } from '../shots/store.js';
 
 // Track previous service statuses to detect transitions and avoid repeated alerts
@@ -67,6 +68,60 @@ function loadYaml<T>(filename: string): T {
   return load(content) as T;
 }
 
+function collectNotificationSummary(): NotificationSummary {
+  const settings = getNotificationsStore().getSettings();
+
+  const channels: NotificationSummary['channels'] = [
+    {
+      channel: 'browser',
+      enabled: settings.browser.enabled,
+      configured: settings.browser.enabled,
+      status: settings.browser.enabled ? 'online' : 'unknown',
+    },
+    {
+      channel: 'ntfy',
+      enabled: settings.ntfy.enabled,
+      configured: Boolean(settings.ntfy.server_url && settings.ntfy.topic),
+      status: !settings.ntfy.enabled ? 'unknown' : settings.ntfy.server_url && settings.ntfy.topic ? 'online' : 'degraded',
+    },
+    {
+      channel: 'smtp',
+      enabled: settings.smtp.enabled,
+      configured: Boolean(
+        settings.smtp.host &&
+        settings.smtp.port &&
+        settings.smtp.from_email &&
+        settings.smtp.to_emails.length > 0,
+      ),
+      status: !settings.smtp.enabled
+        ? 'unknown'
+        : settings.smtp.host &&
+            settings.smtp.port &&
+            settings.smtp.from_email &&
+            settings.smtp.to_emails.length > 0
+          ? 'online'
+          : 'degraded',
+    },
+  ];
+
+  const enabledChannels = channels.filter((channel) => channel.enabled);
+  const readyChannels = enabledChannels.filter((channel) => channel.configured);
+  const misconfiguredChannels = enabledChannels.filter((channel) => !channel.configured);
+
+  return {
+    status:
+      misconfiguredChannels.length > 0
+        ? 'degraded'
+        : readyChannels.length > 0
+          ? 'online'
+          : 'unknown',
+    enabled_channels: enabledChannels.length,
+    ready_channels: readyChannels.length,
+    misconfigured_channels: misconfiguredChannels.length,
+    channels,
+  };
+}
+
 export async function collectState(): Promise<DashboardState> {
   // Load inventory
   const hostsFile = loadYaml<InventoryFile>('hosts.yaml');
@@ -76,6 +131,7 @@ export async function collectState(): Promise<DashboardState> {
   const backupsFile = loadYaml<InventoryFile>('backups.yaml');
   const runtimeBackups = getShotsStore().listLegacyBackups();
   const secrets = collectSecretInventory(INVENTORY_DIR);
+  const notificationSummary = collectNotificationSummary();
 
   const hosts = hostsFile.hosts ?? [];
   const services = servicesFile.services ?? [];
@@ -229,6 +285,7 @@ export async function collectState(): Promise<DashboardState> {
     checks: [],
     backups: runtimeBackups.length > 0 ? runtimeBackups : backupsFile.backups ?? [],
     secrets,
+    notification_summary: notificationSummary,
     generated_at: new Date().toISOString(),
   };
 }

@@ -1,76 +1,66 @@
 # Shost Current State Inventory
 
-**Document Version:** 1.0.0
-**Last Updated:** 2026-04-04
+**Document Version:** 2.1.0
+**Last Updated:** 2026-04-07
 
 ## Purpose
 
-This document is a reality check for the current app.
+This document is the current reality check for the app and repo surface.
 
 It separates:
-- what is genuinely working in the UI now
-- what backend or data support exists but is only partially surfaced
-- what is mock, static, or placeholder
+- what is genuinely working now
+- what is partially real but still needs hardening
+- what is inventory-backed or otherwise not yet truly live
 
-This is meant to be the baseline before committing to later roadmap phases.
+Use this before promoting roadmap or phase-plan work into active execution.
 
 ## Classification Rules
 
-### Working Now
+### Live
 
-The feature is available in the UI and backed by real runtime data or a real interaction path.
+The feature is available in the UI and is backed by a real runtime path, live collector, or real mutation endpoint.
 
-### Almost There
+### Partial
 
-The backend, data model, or part of the UI exists, but the feature is incomplete, weakly surfaced, or not yet trustworthy enough to call done.
+The page or backend path is useful now, but some important parts are still inventory-backed, brittle, or not yet fully surfaced.
 
-### Mock / Placeholder
+### Inventory-Backed / Planned
 
-The feature is static, hard-coded, inventory-only with no live collection, or explicitly a placeholder page.
+The UI exists, but the data is still coming mainly from YAML or is otherwise not yet real observability or control.
 
 ## Shared Backend Reality
 
-### Live data currently assembled in `/api/state`
+### Live state assembled in `/api/state`
 
-The backend currently provides real merged state for:
-- laptop host metrics via `systeminformation`
+The backend currently provides merged state for:
+- laptop host metrics via the laptop exporter
 - CM4 host metrics via the remote exporter
-- Docker container status on the laptop
+- Docker container status for laptop services
 - Docker container status from the CM4 exporter
-- HTTP health checks for services with URLs
+- service health checks for configured services
+- Home Assistant-derived IoT hub and device state when HA credentials are configured
+- laptop MQTT thermal readings when the MQTT thermal feed is configured
+- secret metadata from `inventory/secrets.yaml` with env presence checks
+- backup runtime state from the Shots store, with fallback to `inventory/backups.yaml`
+- app-wide notification readiness summary from persisted notification settings
 
-Relevant files:
-- [server/collectors/index.ts](/home/mmariani/Projects/homelab-dashboard/server/collectors/index.ts)
-- [server/collectors/local-metrics.ts](/home/mmariani/Projects/homelab-dashboard/server/collectors/local-metrics.ts)
-- [server/collectors/remote-host.ts](/home/mmariani/Projects/homelab-dashboard/server/collectors/remote-host.ts)
-- [server/collectors/docker.ts](/home/mmariani/Projects/homelab-dashboard/server/collectors/docker.ts)
-- [server/collectors/health-checks.ts](/home/mmariani/Projects/homelab-dashboard/server/collectors/health-checks.ts)
-
-### API capabilities that exist outside `/api/state`
+### Live mutation and utility endpoints
 
 The backend also supports:
 - host metadata editing
-- container `restart`
-- container `stop`
-- container `start`
-- container log fetch by name
+- service log fetch
+- container restart
+- container stop
+- container start
+- Shots job CRUD, schedules, summary, and run history
 
-Relevant file:
-- [server/index.ts](/home/mmariani/Projects/homelab-dashboard/server/index.ts)
+### Mostly inventory-backed domains
 
-### Inventory-only domains right now
-
-These areas are still fed from YAML without live collectors:
+These areas still rely mainly on YAML or static structure:
 - network devices and access paths
-- IoT hubs and devices
-- backups summary
-- stows inventory file itself
-
-Relevant files:
-- [inventory/network.yaml](/home/mmariani/Projects/homelab-dashboard/inventory/network.yaml)
-- [inventory/iot.yaml](/home/mmariani/Projects/homelab-dashboard/inventory/iot.yaml)
-- [inventory/backups.yaml](/home/mmariani/Projects/homelab-dashboard/inventory/backups.yaml)
-- [inventory/stows.yaml](/home/mmariani/Projects/homelab-dashboard/inventory/stows.yaml)
+- storage inventory and cleanup suggestions
+- some service metadata quality
+- backup topology beyond the implemented runner paths
 
 ## Page Inventory
 
@@ -79,337 +69,253 @@ Relevant files:
 Route:
 - `/`
 
-Working now:
-- top-level host counts from live state
-- Wapps count based on live `services` state
-- Yots counts based on current `iot_hubs` and `devices` state
-- Shots summary card from `backups.yaml`
-- external access card from `network.yaml`
+Status:
+- `Partial`
 
-Almost there:
-- the page is operational, but some sections mix live and static domains without clearly saying which is which
-- labels still use descriptive terms like `Services` and `Backups` instead of the branded page names
+Live now:
+- shared summary banner, KPI strip, and state-indicator row
+- host counts and host metrics summary from live state
+- Wapps counts from merged service state
+- backup summary from current Shots/runtime backup state
+- surfaced backup freshness, access-path, pressure, secret-hygiene, and notification-readiness summary signals
 
-Mock / Placeholder:
-- none in the UI component itself, but backup and access summaries are only as real as their inventory files
-
-Relevant file:
-- [src/pages/Overview.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Overview.tsx)
-
-Assessment:
-- usable now
-- should be relabeled and annotated for data provenance
+Partial:
+- overview cards still mix live, inventory-backed, and inferred data by design
+- provenance is now explicit in the UI, but some signals remain mixed-quality until their source domains become live
 
 ### Hosts
 
 Route:
 - `/hosts`
 
-Working now:
-- live laptop metrics
-- live CM4 metrics through exporter
-- host cards with CPU, RAM, disk, temp, uptime
-- tag display and tag filtering
+Status:
+- `Live`
+
+Live now:
+- laptop and CM4 exporter-backed metrics
+- CPU, RAM, disk, uptime, and temperature metrics
+- host tags and filtering
 - exporter version tooltip
 - host detail modal
-- host metadata editing for name, tags, and links via API
+- host metadata editing through API
 - top CPU processes
 - top memory processes
 - disk breakdown by mount
+- laptop MQTT thermal overlay when configured
 
-Almost there:
-- save flow works, but there is no obvious success or failure feedback in the UI
-- laptop drilldown richness depends on what is populated into `metrics`; the deep process and disk details are strongest for exporter-backed hosts
-
-Mock / Placeholder:
-- seed metrics still exist in `inventory/hosts.yaml`, but they are overwritten by live state where available
-
-Relevant files:
-- [src/pages/Hosts.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Hosts.tsx)
-- [src/components/HostDetailModal.tsx](/home/mmariani/Projects/homelab-dashboard/src/components/HostDetailModal.tsx)
-- [agent/exporter.py](/home/mmariani/Projects/homelab-dashboard/agent/exporter.py)
-- [server/index.ts](/home/mmariani/Projects/homelab-dashboard/server/index.ts)
-
-Assessment:
-- the strongest page in the product
-- this is genuinely working and close to a baseline worth keeping
+Still weak:
+- save feedback could be clearer
+- external thermal probe calibration and warning thresholds are not yet formalized
 
 ### Wapps
 
 Route:
 - `/wapps`
 
-Working now:
-- list of services from inventory
-- live container status merged from laptop Docker and CM4 exporter
-- HTTP health check status for services with URLs
+Status:
+- `Live`
+
+Live now:
+- service inventory with CRUD UI
+- merged container status from laptop Docker and CM4 exporter
+- health checks via configured service checks
 - grouping by host or category
-- service tag filtering when tags exist
-- external links to service URLs and exposed domains
-- restart, stop, and start actions via backend endpoints
+- tag display and filtering
+- links to service URLs and exposed domains
+- restart, stop, and start actions
+- down and recovery notifications
 
-Almost there:
-- container matching is name-based and may be brittle
-- uptime, image tag/version, and richer action feedback are not surfaced
-- there is no explicit indication of whether a status came from container state or HTTP health
-- service tags exist in the type and UI but are not yet populated in `inventory/services.yaml`
-
-Mock / Placeholder:
-- none at the page-shell level
-- quality depends on inventory completeness and container name matching
-
-Relevant files:
-- [src/pages/Wapps.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Wapps.tsx)
-- [inventory/services.yaml](/home/mmariani/Projects/homelab-dashboard/inventory/services.yaml)
-- [server/collectors/index.ts](/home/mmariani/Projects/homelab-dashboard/server/collectors/index.ts)
-- [server/index.ts](/home/mmariani/Projects/homelab-dashboard/server/index.ts)
-
-Assessment:
-- meaningfully functional now
-- strong candidate for “live but not fully hardened”
+Still weak:
+- container matching is still partly name-based
+- service tags are supported but sparsely populated
+- image/version details and clearer provenance are not fully surfaced
 
 ### Works
 
 Route:
 - `/works`
 
-Working now:
+Status:
+- `Inventory-Backed / Planned`
+
+Live now:
 - network devices render from inventory
 - access paths render from inventory
-- service names are resolved from access-path service IDs to human-readable names
+- service IDs resolve to service names
 
-Almost there:
-- the screen layout is usable and not just a stub
-- it could become real quickly if live collectors for ping, tunnel health, DNS, or Tailscale status are added
-
-Mock / Placeholder:
-- all data is currently inventory-backed
-- there are no live network collectors
-- current `status` values are effectively manual
-
-Relevant files:
-- [src/pages/Works.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Works.tsx)
-- [inventory/network.yaml](/home/mmariani/Projects/homelab-dashboard/inventory/network.yaml)
-
-Assessment:
-- real page, static data
-- presentationally built, operationally not yet live
+Not yet live:
+- ping reachability
+- Cloudflare tunnel health
+- Tailscale status
+- DNS checks
+- router and switch telemetry
 
 ### Yots
 
 Route:
 - `/yots`
 
-Working now:
-- hubs and devices render from inventory
-- grouping by area, type, or hub
-- low-battery filter based on `battery_pct`
-- device and hub cards with status badges
+Status:
+- `Partial`
 
-Almost there:
-- the page itself is complete enough to use as a manual dashboard
-- it could become much more useful with live data from Zigbee2MQTT or MQTT
+Live now:
+- IoT hubs and devices can be collected from Home Assistant when HA access is configured
+- hub/device grouping
+- battery-aware filtering
+- status badges and area grouping
 
-Mock / Placeholder:
-- all hub and device state is inventory-backed
-- no live collector exists for device presence, last-seen, or battery
-
-Relevant files:
-- [src/pages/Yots.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Yots.tsx)
-- [inventory/iot.yaml](/home/mmariani/Projects/homelab-dashboard/inventory/iot.yaml)
-
-Assessment:
-- good UI shell
-- not yet real observability
+Fallback / limitations:
+- falls back to `inventory/iot.yaml` when HA is unavailable or not configured
+- not a direct Zigbee2MQTT or MQTT-native collector yet
+- live broker/client telemetry is not implemented
 
 ### Stows
 
 Route:
 - `/stows`
 
-Working now:
-- host disk sections render from live `metrics.disks` when exporter data is available
-- critical-disk count is derived from those live disk values
+Status:
+- `Partial`
 
-Almost there:
-- the inventory file for stows exists, but the page does not read it yet
-- the page could be made substantially more honest by wiring `inventory/stows.yaml` into state and rendering it instead of hard-coded arrays
+Live now:
+- disk sections can render from live exporter disk metrics
+- critical disk count is derived from live disk values
 
-Mock / Placeholder:
-- cache analysis is hard-coded
-- cleanup recommendations are hard-coded
-- network shares are hard-coded
-- network share count is hard-coded as `2`
-
-Relevant files:
-- [src/pages/Stows.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Stows.tsx)
-- [inventory/stows.yaml](/home/mmariani/Projects/homelab-dashboard/inventory/stows.yaml)
-- [agent/exporter.py](/home/mmariani/Projects/homelab-dashboard/agent/exporter.py)
-
-Assessment:
-- mixed page
-- one real live section, several mock sections
+Still mock or inventory-light:
+- cache analysis
+- cleanup recommendations
+- share inventory rendering
+- deeper directory-size analysis
 
 ### Shots
 
 Route:
 - `/shots`
 
-Working now:
-- page exists in navigation and communicates that the workstream lives in `shots/`
+Status:
+- `Live`
 
-Almost there:
-- backup summary data already exists in `inventory/backups.yaml` and is shown in Overview and Wallboard
-- the `shots/` companion area exists and has design work
+Live now:
+- backup jobs UI
+- create, edit, and delete job flows
+- manual run initiation
+- schedule and retention configuration
+- notification configuration
+- run history
+- summary cards
+- local/runtime store integration
+- CM4 remote-runner path through the exporter
 
-Mock / Placeholder:
-- the page itself is a placeholder
-- no backup management UI exists in the main app yet
-
-Relevant files:
-- [src/pages/Shots.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Shots.tsx)
-- [shots/docs/SHOTS_V1_DESIGN.md](/home/mmariani/Projects/homelab-dashboard/shots/docs/SHOTS_V1_DESIGN.md)
-- [inventory/backups.yaml](/home/mmariani/Projects/homelab-dashboard/inventory/backups.yaml)
-
-Assessment:
-- placeholder with adjacent design work
+Still weak or incomplete:
+- laptop host-runner model is not yet the single finalized path
+- restore-confidence reporting is not implemented
+- path validation UX is still limited
 
 ### Tracs
 
 Route:
 - `/tracs`
 
-Working now:
-- service selector based on services with container status
-- backend log fetch through `/api/containers/:name/logs`
+Status:
+- `Live`
+
+Live now:
+- service selector
+- service log fetch
 - tail-line selection
-- log level filtering
+- level filtering
 - text search
 - auto-scroll toggle
 - refresh action
-- basic timestamp parsing and log-level highlighting
+- local and CM4 log retrieval through service mapping
 
-Almost there:
-- logs are fetched on demand rather than streamed
-- parsing is heuristic and not source-aware
-- no explicit host selector exists, even though logs may come from different runtime contexts through container name mapping
-
-Mock / Placeholder:
-- none at the page shell level
-
-Relevant files:
-- [src/pages/Tracs.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Tracs.tsx)
-- [server/index.ts](/home/mmariani/Projects/homelab-dashboard/server/index.ts)
-
-Assessment:
-- genuinely working
-- better than a placeholder and already useful
+Still weak:
+- polling/fetch model instead of true streaming
+- parsing remains heuristic
 
 ### Crets
 
 Route:
 - `/crets`
 
-Working now:
-- page layout, filtering, and rotation-status calculations
+Status:
+- `Partial`
 
-Almost there:
-- the UX shape is defined well enough to keep
+Live now:
+- secret metadata from `inventory/secrets.yaml`
+- env-presence checks
+- rotation policy calculations
+- filtering by state and scope
 
-Mock / Placeholder:
-- all data is hard-coded in the page component
-- there is no backend route, inventory file, or persisted source
-
-Relevant file:
-- [src/pages/Crets.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Crets.tsx)
-
-Assessment:
-- pure mock
-- should either be clearly labeled as such or hidden until backed by real metadata
+Still weak:
+- metadata inventory is curated by hand
+- no edit workflow yet
+- no external secret-store integration
 
 ### Settings
 
 Route:
 - `/settings`
 
-Working now:
+Status:
+- `Live`
+
+Live now:
 - theme toggle
 - localStorage persistence
-- light/system/dark mode switching
-
-Almost there:
-- no additional settings domains yet
-
-Mock / Placeholder:
-- none
-
-Relevant file:
-- [src/pages/Settings.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Settings.tsx)
-
-Assessment:
-- small but real
+- system/light/dark mode support
 
 ### Wallboard
 
 Route:
 - `/wallboard`
 
-Working now:
-- castable fullscreen summary
-- host, services, device, and backup counts
-- host cards with live host metrics
+Status:
+- `Partial`
 
-Almost there:
-- labels still use descriptive names
-- counts for Yots and Shots reflect inventory-backed domains
+Live now:
+- shared summary banner, KPI strip, and state-indicator row
+- fullscreen summary layout
+- host cards with live metrics
+- compact secondary signals for backups, access paths, and degraded services
+- last-updated footer and explicit provenance note
 
-Mock / Placeholder:
-- none in the component shell
-- meaning depends on the truthfulness of the underlying domains
+Still weak:
+- some counts still reflect mixed live/inventory-backed domains
+- cast-readability has been improved in code but still needs final real-world validation
 
-Relevant file:
-- [src/pages/Wallboard.tsx](/home/mmariani/Projects/homelab-dashboard/src/pages/Wallboard.tsx)
+## Summary
 
-Assessment:
-- operational now
-- should be aligned with branded naming and data-provenance cues
+### Strongest Current Surfaces
 
-## Summary Inventory
+- Hosts
+- Wapps
+- Shots
+- Tracs
+- Settings
 
-### What We Have
+### Useful But Still Mixed
 
-- Overview: working summary page with mixed live and static domains
-- Hosts: genuinely live and strong
-- Wapps: genuinely functional with live status, actions, and links
-- Tracs: genuinely functional log viewer
-- Settings: small but real
-- Wallboard: real and usable
-- Works: presentationally complete but inventory-backed
-- Yots: presentationally complete but inventory-backed
-- Stows: mixed live and mock
-- Shots: routed placeholder with companion design work
-- Crets: mock UI only
+- Overview
+- Yots
+- Stows
+- Crets
+- Wallboard
 
-### What We Almost Have
+### Mostly Inventory-Backed
 
-- Works with real network collectors
-- Yots with live Zigbee2MQTT or MQTT data
-- Stows driven by real `inventory/stows.yaml` plus measured cache/share data
-- Shots integrated into the main app using existing backup summary concepts
-- Wapps hardened with better container matching and clearer data provenance
-- Hosts save flow with better feedback and stronger laptop drilldowns
+- Works
 
-### What Is Mock Or Placeholder
+## Recommended Interpretation
 
-- Crets data model and source
-- most of Stows beyond disk breakdown
-- Shots page body
-- backup status beyond static summary inventory
-- network, IoT, and backup statuses where they are only YAML values
+Shost is no longer just a hosts dashboard with placeholders.
 
-## Recommended Next Decision Sequence
+The current baseline is:
+- real host observability
+- real service status and actions
+- real backup job management
+- real log access
+- shared summary surfaces with explicit provenance and first-pass KPI/state indicators
+- a growing but still uneven set of inventory-backed operational domains
 
-1. Decide which currently visible pages must be fully truthful before the next roadmap phase.
-2. Decide whether pure mocks like Crets should remain visible.
-3. Decide whether mixed pages like Stows should be trimmed back or wired properly.
-4. Decide whether inventory-backed pages like Works and Yots are acceptable as phase-zero operational placeholders or should be upgraded now.
+The next planning pass should prioritize truthfulness and hardening over adding more mock surface area.

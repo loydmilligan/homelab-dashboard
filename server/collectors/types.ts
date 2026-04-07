@@ -115,6 +115,21 @@ export interface SecretRecord {
   status?: 'present' | 'missing';
 }
 
+export interface NotificationChannelSummary {
+  channel: 'browser' | 'ntfy' | 'smtp';
+  enabled: boolean;
+  configured: boolean;
+  status: Status;
+}
+
+export interface NotificationSummary {
+  status: Status;
+  enabled_channels: number;
+  ready_channels: number;
+  misconfigured_channels: number;
+  channels: NotificationChannelSummary[];
+}
+
 export interface DashboardState {
   hosts: Host[];
   services: Service[];
@@ -125,5 +140,6 @@ export interface DashboardState {
   checks: unknown[];
   backups: unknown[];
   secrets: SecretRecord[];
+  notification_summary?: NotificationSummary;
   generated_at: string;
 }

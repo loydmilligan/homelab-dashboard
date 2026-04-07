@@ -1,13 +1,20 @@
 # Changelog
 
-**Document Version:** 1.2.0
-**Last Updated:** 2026-04-06
+**Document Version:** 1.3.0
+**Last Updated:** 2026-04-07
 
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
 ### Added
+- Consolidated planning backlog in `docs/prio/CONSOLIDATED_BACKLOG.md`
+- Canonical single roadmap doc covering remaining work across prior roadmap, phase-plan, runner-plan, and staged idea sources
+- Archived superseded planning-source docs under `ARCHIVE/docs/prio/`
+- Concrete Sprint 01 implementation plan for the Overview + Wallboard summary-surface initiative
+- Shared summary derivation and reusable summary-surface components for Overview and Wallboard
+- Notification readiness summary in `/api/state`
+- Summary derivation tests via `npm test`
 - Wapps CRUD support for service inventory changes
 - Service down and recovery notifications
 - Home Assistant, secrets, and MQTT thermal collectors
@@ -17,6 +24,11 @@ All notable changes to this project will be documented in this file.
 - Process issue log and `/add_process_issue` command support for Claude
 
 ### Changed
+- Refined Overview and Wallboard around the shared Sprint 01 summary surface with KPI strips, state indicators, provenance labeling, and improved smaller-width / cast-oriented layout
+- Refreshed `docs/prio/CURRENT_STATE_INVENTORY.md` to match the current implemented product surface
+- Rewrote `docs/prio/ROADMAP.md` to remove implemented features and restate partially implemented areas based on current reality
+- Restructured `docs/prio/ROADMAP.md` into a metadata-backed backlog with effort estimates, benefit estimates, cross-cutting tags, and a draft 10-sprint plan
+- Expanded `docs/prio/ROADMAP.md` to define an explicit Overview + Wallboard initiative with KPI, state-indicator, suggested-action, RSS, Chromecast, and external-controller roadmap items
 - Moved roadmap and other planning material into `docs/prio/`
 - Moved superseded design material into `ARCHIVE/`
 - Moved dead legacy pages and other inactive files into `TRASH/`
