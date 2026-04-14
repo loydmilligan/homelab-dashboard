@@ -1,0 +1,8 @@
+{
+  "projectName": "homelab-dashboard",
+  "defaultAttachedDirs": [],
+  "preferredArtifactOutputs": [
+    "artifacts"
+  ],
+  "promptOverrides": {}
+}

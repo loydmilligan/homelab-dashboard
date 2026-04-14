@@ -4,6 +4,7 @@ import { Card } from '../components/Card';
 import { StatusChip } from '../components/StatusChip';
 import { PageHero } from '../components/PageHero';
 import type { Service, Host } from '../types/inventory';
+import { useShareMode, getRedactedLabel } from '../lib/share-mode';
 
 type GroupBy = 'host' | 'category';
 
@@ -207,6 +208,7 @@ interface ServiceCardProps {
 }
 
 function ServiceCard({ service, hostName, onRestart, onStop, onStart, onEdit, onDelete, actionLoading }: ServiceCardProps) {
+  const { shareSafeMode } = useShareMode();
   const isLoading = actionLoading === service.id;
   const isRunning = service.status === 'online';
   const hasContainerControl = service.host_id === 'laptop' && Boolean(service.container_name);
@@ -259,7 +261,7 @@ function ServiceCard({ service, hostName, onRestart, onStop, onStart, onEdit, on
         </div>
       )}
 
-      {service.url && (
+      {service.url && !shareSafeMode && (
         <a
           href={service.url}
           target="_blank"
@@ -273,14 +275,24 @@ function ServiceCard({ service, hostName, onRestart, onStop, onStart, onEdit, on
         </a>
       )}
 
+      {service.url && shareSafeMode && (
+        <div className="mb-2 text-sm text-gray-500">{getRedactedLabel()}</div>
+      )}
+
       {service.exposes && service.exposes.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-2">
-          {service.exposes.map((domain) => (
-            <a key={domain} href={`https://${domain}`} target="_blank" rel="noopener noreferrer"
-              className="text-xs px-2 py-0.5 rounded bg-green-900/30 text-green-400 hover:bg-green-900/50">
-              {domain}
-            </a>
-          ))}
+          {shareSafeMode ? (
+            <span className="text-xs px-2 py-0.5 rounded bg-gray-800 text-gray-400">
+              {service.exposes.length} external URL{service.exposes.length === 1 ? '' : 's'} hidden
+            </span>
+          ) : (
+            service.exposes.map((domain) => (
+              <a key={domain} href={`https://${domain}`} target="_blank" rel="noopener noreferrer"
+                className="text-xs px-2 py-0.5 rounded bg-green-900/30 text-green-400 hover:bg-green-900/50">
+                {domain}
+              </a>
+            ))
+          )}
         </div>
       )}
 

@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "defaults": {
+    "model": "google/gemini-3-pro-image-preview",
+    "size": "1K",
+    "output_dir": "output/cast-icons",
+    "output_sizes": ["512x512"],
+    "style": "polished futuristic dashboard icon, bold silhouette, subtle glow, crisp edges",
+    "family_style": "cohesive premium icon family, consistent visual DNA",
+    "shape_language": "square tile with one dominant object and supporting cue",
+    "background_treatment": "transparent or dark background",
+    "lighting_style": "controlled glow, restrained gloss, soft edge highlights",
+    "detail_level": "medium detail, optimized for clarity",
+    "primary_color": "electric purple",
+    "secondary_color": "soft violet"
+  },
+  "icons": [
+    {
+      "section": "Cast-Purple-Waves",
+      "icon_name": "purple-waves",
+      "primary_concept": "Shost S logo with casting sound waves",
+      "secondary_cues": "3-4 concentric arcs radiating outward",
+      "meaning": "casting dashboard to TV",
+      "primary_color": "electric purple",
+      "secondary_color": "soft lavender"
+    },
+    {
+      "section": "Cast-Minimal",
+      "icon_name": "minimal",
+      "primary_concept": "minimalist Shost S with subtle casting waves",
+      "secondary_cues": "single wave arc, clean geometric style",
+      "meaning": "casting to Chromecast",
+      "primary_color": "purple",
+      "secondary_color": "white"
+    },
+    {
+      "section": "Cast-Dark-Glass",
+      "icon_name": "dark-glass",
+      "primary_concept": "Shost S inside rounded square with casting waves",
+      "secondary_cues": "glass morphism background, emanating waves",
+      "meaning": "wallboard casting",
+      "primary_color": "vibrant purple",
+      "secondary_color": "cyan accent"
+    },
+    {
+      "section": "Cast-Bold",
+      "icon_name": "bold",
+      "primary_concept": "bold Shost S with prominent casting waves",
+      "secondary_cues": "large waves, high contrast, impactful",
+      "meaning": "casting interface",
+      "primary_color": "deep purple",
+      "secondary_color": "bright purple"
+    },
+    {
+      "section": "Cast-Glow",
+      "icon_name": "glow",
+      "primary_concept": "Shost S with glowing casting emanation",
+      "secondary_cues": "radiant waves, luminous effect",
+      "meaning": "streaming to TV",
+      "primary_color": "electric violet",
+      "secondary_color": "white glow"
+    }
+  ]
+}

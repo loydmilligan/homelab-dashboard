@@ -39,8 +39,30 @@ body {
   @apply bg-gray-200;
 }
 
+/* PWA / mobile optimizations */
+html {
+  /* Use dvh to account for dynamic viewport (address bar on Android) */
+  height: 100%;
+}
+
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
+  /* Prevent pull-to-refresh interfering with app navigation */
+  overscroll-behavior-y: contain;
+}
+
+/* Eliminate 300ms tap delay across all interactive elements */
+a, button, [role="button"], input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Safe area insets for notch / gesture bar on Android/iOS */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* TV-friendly large text mode */

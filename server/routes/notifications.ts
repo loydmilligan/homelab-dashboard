@@ -42,7 +42,7 @@ function parseSettings(body: unknown): NotificationSettings {
 }
 
 router.get('/settings', (_req, res) => {
-  res.json({ settings: getNotificationsStore().getSettings() });
+  res.json({ settings: getNotificationsStore().getPublicSettings() });
 });
 
 router.put('/settings', (req, res) => {

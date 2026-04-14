@@ -22,6 +22,8 @@ services:
     url: https://zigbee.mattmariani.com
     check_type: http
     check_target: http://192.168.6.38:8085
+    exposes:
+      - zigbee.mattmariani.com
   - id: mosquitto
     name: Mosquitto
     host_id: cm4
@@ -64,17 +66,19 @@ services:
     check_target: 192.168.6.38:22
   - id: n8n
     name: n8n
-    host_id: laptop
+    host_id: cm4
     category: automation
-    url: http://localhost:5678
-    check_type: docker
+    url: https://n8n.mattmariani.com
+    check_type: tcp
     container_name: n8n
-    backup_policy: weekly-config
+    check_target: 192.168.6.38:5678
+    exposes:
+      - n8n.mattmariani.com
   - id: mqtt-explorer
     name: MQTT Explorer
     host_id: laptop
     category: observability
-    url: http://localhost:4000
+    url: http://mqtt-exp1.mattmariani.com
     check_type: docker
     container_name: mqtt-explorer
   - id: karakeep
@@ -82,18 +86,25 @@ services:
     host_id: laptop
     category: apps
     check_type: docker
-    container_name: karakeep
+    container_name: docker-web-1
+    url: https://hoard.mattmariani.com
+    exposes:
+      - hoard.mattmariani.com
   - id: dumbpad
     name: DumbPad
     host_id: laptop
     category: apps
-    url: http://localhost:3003
+    url: https://dumb.mattmariani.com
     check_type: docker
     container_name: dumbpad
+    exposes:
+      - dumb.mattmariani.com
   - id: whopicked
     name: WhoPicked
     host_id: laptop
     category: apps
-    url: http://localhost:4287
+    url: https://whopicked.mattmariani.com
     check_type: docker
     container_name: whopicked
+    exposes:
+      - whopicked.mattmariani.com

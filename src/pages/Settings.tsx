@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Card } from '../components/Card';
 import { PageHero } from '../components/PageHero';
 import type { NotificationSettings } from '../types/notifications';
+import { useShareMode } from '../lib/share-mode';
 
 type Theme = 'dark' | 'light' | 'system';
 
 export function Settings() {
+  const { shareSafeMode, setShareSafeMode } = useShareMode();
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('theme') as Theme) || 'dark';
   });
@@ -109,10 +111,33 @@ export function Settings() {
               ))}
             </div>
           </div>
+
+          <div className="rounded-lg border border-gray-800 bg-gray-950/40 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-medium text-gray-100">Share-safe mode</div>
+                <div className="text-xs text-gray-500">
+                  Hide obvious external URLs, access endpoints, and sensitive settings UI for demos or temporary sharing.
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                checked={shareSafeMode}
+                onChange={(event) => setShareSafeMode(event.target.checked)}
+              />
+            </div>
+          </div>
         </div>
       </Card>
 
-      {notificationSettings ? (
+      {shareSafeMode ? (
+        <Card>
+          <h3 className="text-lg font-medium text-gray-100 mb-4">Notifications</h3>
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            Notification delivery settings are hidden while share-safe mode is enabled.
+          </div>
+        </Card>
+      ) : notificationSettings ? (
         <Card>
           <h3 className="text-lg font-medium text-gray-100 mb-4">Notifications</h3>
           <div className="space-y-6">
@@ -152,8 +177,10 @@ export function Settings() {
               </div>
               <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder="Server URL, e.g. https://ntfy.mattmariani.com" value={notificationSettings.ntfy.server_url ?? ''} onChange={(event) => setNotificationSettings((current) => current ? { ...current, ntfy: { ...current.ntfy, server_url: event.target.value } } : current)} />
               <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder="Topic, e.g. shost-nots" value={notificationSettings.ntfy.topic ?? ''} onChange={(event) => setNotificationSettings((current) => current ? { ...current, ntfy: { ...current.ntfy, topic: event.target.value } } : current)} />
-              <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder="Token" value={notificationSettings.ntfy.token ?? ''} onChange={(event) => setNotificationSettings((current) => current ? { ...current, ntfy: { ...current.ntfy, token: event.target.value } } : current)} />
-              <div className="text-xs text-gray-500">Use either a token or username/password credentials. The token is enough for your setup.</div>
+              <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder={notificationSettings.ntfy.has_token ? 'Stored token preserved unless replaced' : 'Token'} value={notificationSettings.ntfy.token ?? ''} onChange={(event) => setNotificationSettings((current) => current ? { ...current, ntfy: { ...current.ntfy, token: event.target.value } } : current)} />
+              <div className="text-xs text-gray-500">
+                Use either a token or username/password credentials. Existing secrets are no longer returned to the browser and are preserved unless you enter a replacement.
+              </div>
             </div>
 
             <div className="space-y-3 rounded-lg border border-gray-800 bg-gray-950/40 p-4">
@@ -193,7 +220,7 @@ export function Settings() {
                 </label>
               </div>
               <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder="SMTP username" value={notificationSettings.smtp.username ?? ''} onChange={(event) => setNotificationSettings((current) => current ? { ...current, smtp: { ...current.smtp, username: event.target.value } } : current)} />
-              <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder="SMTP password or app password" type="password" value={notificationSettings.smtp.password ?? ''} onChange={(event) => setNotificationSettings((current) => current ? { ...current, smtp: { ...current.smtp, password: event.target.value } } : current)} />
+              <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder={notificationSettings.smtp.has_password ? 'Stored SMTP password preserved unless replaced' : 'SMTP password or app password'} type="password" value={notificationSettings.smtp.password ?? ''} onChange={(event) => setNotificationSettings((current) => current ? { ...current, smtp: { ...current.smtp, password: event.target.value } } : current)} />
               <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder="From email" value={notificationSettings.smtp.from_email ?? ''} onChange={(event) => setNotificationSettings((current) => current ? { ...current, smtp: { ...current.smtp, from_email: event.target.value } } : current)} />
               <input className="w-full rounded bg-gray-900 px-3 py-2 text-sm text-gray-100" placeholder="To emails, comma-separated" value={notificationSettings.smtp.to_emails.join(', ')} onChange={(event) => setNotificationSettings((current) => current ? { ...current, smtp: { ...current.smtp, to_emails: event.target.value.split(',').map((value) => value.trim()).filter(Boolean) } } : current)} />
             </div>

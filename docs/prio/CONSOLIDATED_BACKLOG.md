@@ -1,7 +1,7 @@
 # Shost Consolidated Backlog
 
 **Document Version:** 1.0.0
-**Last Updated:** 2026-04-06
+**Last Updated:** 2026-04-07
 
 ## Purpose
 
@@ -97,6 +97,13 @@ This is the cleanest candidate for turning an inventory page into a real operati
 - Improve path validation and job feedback
 - Add restore-confidence indicators
 - Add backup freshness / overdue surfacing outside the Shots page
+
+### 8. Secrets Security Hardening
+
+- Stop returning stored notification secrets to the frontend
+- Encrypt notification credentials at rest or move them to env or external secret storage
+- Distinguish secret metadata inventory from live secret material in both code and UX
+- Audit repo and deployment flows for accidental secret persistence and add explicit verification steps
 
 ## Later
 

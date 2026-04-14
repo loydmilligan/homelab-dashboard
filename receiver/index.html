@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1920, height=1080, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="tv" content="true">
+  <title>Shost Wallboard</title>
+  <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #0a0a0f;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    @media tv {
+      html, body {
+        font-size: 150%;
+      }
+    }
+    .container {
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    iframe {
+      width: 100%; height: 100%;
+      border: none;
+      display: none;
+      transform: scale(0.85);
+      transform-origin: center;
+      }
+      @media tv {
+        iframe {
+          transform: scale(0.7);
+        }
+      }
+    iframe.active { display: block; }
+    .splash {
+      text-align: center;
+      color: #6b7280;
+    }
+    .logo {
+      width: 120px; height: 120px;
+      margin: 0 auto 24px;
+    }
+    .logo svg { width: 100%; height: 100%; }
+    .title { font-size: 36px; color: #fff; margin-bottom: 8px; }
+    .subtitle { font-size: 18px; margin-bottom: 24px; }
+    .error { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="splash" class="splash">
+      <div class="logo">
+        <svg viewBox="0 0 48 46" fill="none">
+          <path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z"/>
+        </svg>
+      </div>
+      <div class="title">Shost Wallboard</div>
+      <div class="subtitle" id="statusText">Ready to cast...</div>
+    </div>
+    <iframe id="wallboard" allow="fullscreen"></iframe>
+  </div>
+
+  <script>
+    var WALLBOARD_URL = 'https://shost-share.wolf-piano.ts.net/wallboard';
+    var NAMESPACE = 'urn:x-cast:shost.wallboard';
+    
+    var wallboardFrame = document.getElementById('wallboard');
+    var splash = document.getElementById('splash');
+    var statusText = document.getElementById('statusText');
+
+    function loadWallboard() {
+      wallboardFrame.src = WALLBOARD_URL + '?cast=true';
+      splash.style.display = 'none';
+      wallboardFrame.classList.add('active');
+    }
+
+    // Initialize CAF Receiver
+    var context = cast.framework.CastReceiverContext.getInstance();
+    
+    context.addCustomMessageListener(NAMESPACE, function(event) {
+      console.log('Received message:', event.data);
+      var data = event.data;
+      if (data.loadUrl) {
+        wallboardFrame.src = data.loadUrl;
+        splash.style.display = 'none';
+        wallboardFrame.classList.add('active');
+      }
+      if (data.reload) {
+        loadWallboard();
+      }
+    });
+
+    context.addEventListener(cast.framework.system.EventType.READY, function() {
+      console.log('Receiver ready');
+      statusText.textContent = 'Ready - tap Cast on your device';
+      loadWallboard();
+      context.setApplicationState('Shost Wallboard');
+    });
+
+    context.addEventListener(cast.framework.system.EventType.SENDER_CONNECTED, function(event) {
+      console.log('Sender connected');
+      loadWallboard();
+    });
+
+    wallboardFrame.onload = function() {
+      console.log('Wallboard iframe loaded');
+    };
+
+    wallboardFrame.onerror = function() {
+      console.error('Wallboard iframe error');
+    };
+
+    var options = new cast.framework.CastReceiverOptions();
+    options.disableIdleTimeout = true;
+    options.maxInactivity = 3600;
+
+    context.start(options);
+    console.log('Shost Cast Receiver started');
+  </script>
+</body>
+</html>

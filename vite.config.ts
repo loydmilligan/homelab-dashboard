@@ -26,15 +26,21 @@ function getBuildNumber(command: 'serve' | 'build') {
   return `B${String(nextValue).padStart(6, '0')}`;
 }
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => ({
   plugins: [react(), tailwindcss()],
   define: {
     __BUILD_NUMBER__: JSON.stringify(getBuildNumber(command)),
+    'import.meta.env.VITE_CAST_AVAILABLE': JSON.stringify(
+      mode === 'production' ? 'true' : process.env.VITE_CAST_AVAILABLE || 'false'
+    ),
+    'import.meta.env.VITE_WALLBOARD_CAST_URL': JSON.stringify(
+      process.env.VITE_WALLBOARD_CAST_URL || 'https://shost-share.wolf-piano.ts.net/wallboard'
+    ),
   },
   server: {
     port: 3088,
     host: true,
-    allowedHosts: ['shost.mattmariani.com'],
+    allowedHosts: ['shost.mattmariani.com', 'shost-share.wolf-piano.ts.net'],
     proxy: {
       '/api': 'http://localhost:3090',
     },

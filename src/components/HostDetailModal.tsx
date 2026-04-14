@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Host } from '../types/inventory';
 import { getHostHealthSignals } from '../lib/host-health';
+import { useShareMode, getRedactedLabel } from '../lib/share-mode';
 
 interface Props {
   host: Host;
@@ -57,6 +58,7 @@ function MetricBar({ label, value, warn = 80, critical = 90 }: {
 }
 
 export function HostDetailModal({ host, onClose, onSave }: Props) {
+  const { shareSafeMode } = useShareMode();
   const metrics = host.metrics;
   const health = getHostHealthSignals(host);
   const [isEditing, setIsEditing] = useState(false);
@@ -434,17 +436,21 @@ export function HostDetailModal({ host, onClose, onSave }: Props) {
               </div>
             ) : host.links && Object.keys(host.links).length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {Object.entries(host.links).map(([name, url]) => (
-                  <a
-                    key={name}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 text-sm rounded bg-gray-800 text-blue-400 hover:bg-gray-700 transition-colors"
-                  >
-                    {name} &rarr;
-                  </a>
-                ))}
+                {shareSafeMode ? (
+                  <div className="text-sm text-gray-500">{getRedactedLabel()}</div>
+                ) : (
+                  Object.entries(host.links).map(([name, url]) => (
+                    <a
+                      key={name}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 text-sm rounded bg-gray-800 text-blue-400 hover:bg-gray-700 transition-colors"
+                    >
+                      {name} &rarr;
+                    </a>
+                  ))
+                )}
               </div>
             ) : (
               <div className="text-sm text-gray-500">No links</div>

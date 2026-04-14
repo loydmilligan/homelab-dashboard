@@ -38,6 +38,19 @@ function parseJson<T>(value: string): T {
   return JSON.parse(value) as T;
 }
 
+function normalizeOptionalSecret(value: string | undefined) {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function mergeSecretValue(nextValue: string | undefined, currentValue: string | undefined) {
+  return normalizeOptionalSecret(nextValue) ?? currentValue;
+}
+
 function formatEvent(row: NotificationRow): NotificationEventRecord {
   return {
     id: row.id,
@@ -106,14 +119,47 @@ export class NotificationsStore {
     return parseJson<NotificationSettings>(row.settings_json);
   }
 
+  getPublicSettings() {
+    const settings = this.getSettings();
+
+    return {
+      browser: settings.browser,
+      ntfy: {
+        ...settings.ntfy,
+        token: undefined,
+        password: undefined,
+        has_token: Boolean(settings.ntfy.token),
+        has_password: Boolean(settings.ntfy.password),
+      },
+      smtp: {
+        ...settings.smtp,
+        password: undefined,
+        has_password: Boolean(settings.smtp.password),
+      },
+    };
+  }
+
   saveSettings(settings: NotificationSettings) {
+    const current = this.getSettings();
+    const merged: NotificationSettings = {
+      browser: settings.browser,
+      ntfy: {
+        ...settings.ntfy,
+        token: mergeSecretValue(settings.ntfy.token, current.ntfy.token),
+        password: mergeSecretValue(settings.ntfy.password, current.ntfy.password),
+      },
+      smtp: {
+        ...settings.smtp,
+        password: mergeSecretValue(settings.smtp.password, current.smtp.password),
+      },
+    };
     const updatedAt = new Date().toISOString();
 
     this.db
       .prepare('UPDATE notification_settings SET settings_json = ?, updated_at = ? WHERE id = 1')
-      .run(JSON.stringify(settings), updatedAt);
+      .run(JSON.stringify(merged), updatedAt);
 
-    return this.getSettings();
+    return this.getPublicSettings();
   }
 
   createEvent(input: EmitNotificationInput) {

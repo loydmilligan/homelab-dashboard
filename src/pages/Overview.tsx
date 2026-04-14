@@ -4,9 +4,11 @@ import { StatusChip } from '../components/StatusChip';
 import { PageHero } from '../components/PageHero';
 import { deriveDashboardSummary } from '../lib/summary';
 import { SummaryBanner, SummaryIndicators, SummaryKpiStrip } from '../components/SummarySurface';
+import { useShareMode, getRedactedLabel } from '../lib/share-mode';
 
 export function Overview() {
   const { state, loading, error } = useStatePolling();
+  const { shareSafeMode } = useShareMode();
 
   if (loading) {
     return <div className="text-gray-400">Loading...</div>;
@@ -98,7 +100,9 @@ export function Overview() {
                   <StatusChip status={path.status} size="sm" />
                 </div>
                 <div className="mt-2 text-xs text-gray-500">
-                  {path.endpoint ?? 'Inventory-backed path; live reachability not implemented yet.'}
+                  {path.endpoint
+                    ? (shareSafeMode ? getRedactedLabel() : path.endpoint)
+                    : 'Inventory-backed path; live reachability not implemented yet.'}
                 </div>
               </div>
             ))}

@@ -12,6 +12,8 @@ export interface NotificationSettings {
     token?: string;
     username?: string;
     password?: string;
+    has_token?: boolean;
+    has_password?: boolean;
   };
   smtp: {
     enabled: boolean;
@@ -22,6 +24,7 @@ export interface NotificationSettings {
     password?: string;
     from_email?: string;
     to_emails: string[];
+    has_password?: boolean;
   };
 }
 

@@ -31,6 +31,4 @@ hosts:
     tags:
       - workstation
       - docker-host
-      - wsl2
-    links:
-      portainer: http://localhost:9000
+    links: {}

@@ -554,6 +554,20 @@ This is intentionally rough. Sprint grouping is optimized for thematic focus, no
   - `security_relevant`: `true`
   - `developer_leverage`: `false`
 
+- `CRT-03` Harden secret material handling for notification and app credentials
+  - `Screen`: `Crets / Settings / Backend`
+  - `Type`: `user`, `security`, `admin-dev`
+  - `Category`: `security`
+  - `Tags`: `secrets`, `encryption`, `settings`, `storage`, `redaction`
+  - `Effort`: `5`
+  - `Benefit`: `high`
+  - `subfeature`: `false`
+  - `parent`: `none`
+  - `partial_followup`: `false`
+  - `mobile_related`: `false`
+  - `security_relevant`: `true`
+  - `developer_leverage`: `true`
+
 ### Integrations
 
 - `HA-01` Expand Home Assistant visibility beyond the Yots slice
